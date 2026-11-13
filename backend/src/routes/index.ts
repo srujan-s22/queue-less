@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import authRoutes from './authRoutes';
 import userRoutes from './userRoutes';
 import menuRoutes from './menuRoutes';
@@ -11,11 +12,14 @@ import analyticsRoutes from './analyticsRoutes';
 
 const router = Router();
 
-// Health Check
+// Health Check — Verifies both process health and MongoDB connectivity
 router.get('/health', (_req, res) => {
-  res.status(200).json({
-    status: 'ok',
+  const isDbConnected = mongoose.connection.readyState === 1;
+  const status = isDbConnected ? 'ok' : 'degraded';
+  res.status(isDbConnected ? 200 : 503).json({
+    status,
     service: 'queueless-backend',
+    database: isDbConnected ? 'connected' : 'disconnected',
     timestamp: new Date().toISOString(),
   });
 });

@@ -1,0 +1,25 @@
+# Node dependencies & compilation outputs
+node_modules
+dist
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git & IDE metadata
+.git
+.github
+.vscode
+.idea
+*.tsbuildinfo
+
+# Environment & Secrets (preserve .env.example only)
+.env
+.env*.local
+.env.development
+.env.production
+!.env.example
+
+# Test artifacts
+tests
+coverage
+jest.config.ts

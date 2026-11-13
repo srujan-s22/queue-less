@@ -34,21 +34,73 @@ QueueLess provides three dedicated, professionally designed workspaces:
 
 ## 3. Technology Stack
 
-### Full Stack (Phases 1, 2, 3, and 3.1 - Complete)
-- **Frontend (Port 3000 / 3001):** Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS v4, Socket.IO Client
+### Full Stack & Containerization (Phases 1, 2, 3, 3.1, and 4 - Complete)
+- **Frontend (Port 3000):** Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS v4, Socket.IO Client
 - **REST & Real-Time Gateway (Default Port 5001):** Node.js, Express.js, TypeScript, Mongoose ODM, Socket.IO Server
-- **Database (Port 27017):** MongoDB (8 collections: `users`, `menu_items`, `pickup_slots`, `orders`, `counters`, `canteen_settings`, `order_status_history`, `audit_logs`)
-- **Background Worker (`worker/`):** Standalone Node.js daemon (15s cadence) with atomic late-fee assessment
-- **Security & Integrity:** Dual HTTP-only JWT cookies + Bearer auth, bcrypt password hashing, atomic slot capacity protection, server-calculated pricing, Zod schema validation, Socket.IO room-level student authorization
+- **Database (Internal Port 27017):** MongoDB 7 (named persistent Docker volume: `queueless_mongo_data`)
+- **Background Worker (`worker/`):** Standalone Node.js daemon (15s cadence) with atomic late-fee assessment and file-based heartbeat monitoring
+- **Containerization & Orchestration:** Multi-stage production Dockerfiles (`node:22-alpine` ARM64 native), Docker Compose with health checks and fail-fast JWT security
+- **Security & Integrity:** Strict environment JWT enforcement (no fallback secrets), dual HTTP-only JWT cookies + Bearer auth, bcrypt password hashing, atomic slot capacity protection, server-calculated pricing, Zod schema validation, Socket.IO room-level student authorization
 
 ### Planned DevOps (Future Phases)
-- **Phase 4:** Multi-Stage Docker Containerization (Frontend, Backend, Worker, Mongo) & Docker Compose
 - **Phase 5:** Kubernetes & Minikube Orchestration
 - **Phase 6:** CI/CD via GitHub Actions
 
 ---
 
-## 4. Getting Started
+## 4. Quick Start with Docker Compose (Recommended)
+
+### Prerequisites
+- Docker Engine v24+ and Docker Compose v2.20+ (Tested on Docker 29.9.3 / Compose v5.7.0 on Apple Silicon M4)
+
+### 1. Configure Local Environment
+```bash
+# Copy the environment template
+cp .env.example .env
+
+# Set a strong JWT_SECRET (at least 32 characters)
+# macOS/Linux one-liner:
+sed -i '' "s/JWT_SECRET=.*/JWT_SECRET=$(openssl rand -base64 32)/" .env
+```
+
+### 2. Build and Launch All Services
+```bash
+# Build multi-stage production images
+docker compose build
+
+# Start Mongo, Backend, Worker, and Frontend in the background
+docker compose up -d
+
+# Check service health status (wait until all 4 report "healthy")
+docker compose ps
+```
+
+### 3. Seed Database (Explicit & Safe)
+```bash
+# Seed users, menu catalog, pickup slots, and canteen settings into the MongoDB container
+docker compose exec backend npm run seed
+```
+
+### 4. Access the Platform
+- **Student, Staff & Admin Portals:** [http://localhost:3000](http://localhost:3000)
+- **Backend REST API:** [http://localhost:5001/api/v1](http://localhost:5001/api/v1)
+- **Backend Health Check:** [http://localhost:5001/api/v1/health](http://localhost:5001/api/v1/health)
+- **Frontend Health Check:** [http://localhost:3000/api/health](http://localhost:3000/api/health)
+
+### 5. Stopping the Stack
+```bash
+# Stop containers (MongoDB data is safely preserved in named volume 'queueless_mongo_data')
+docker compose stop
+
+# Or stop and remove containers & network (volume remains untouched)
+docker compose down
+
+# WARNING: NEVER run 'docker compose down -v' unless you want to completely erase the database volume!
+```
+
+---
+
+## 5. Alternative: Local Development Setup (Without Docker)
 
 ### Prerequisites
 - Node.js (v18.18+ or v20+, developed on v24)
@@ -91,7 +143,7 @@ npm run dev
 
 ---
 
-## 5. Quick Role Switching & Multi-Portal Evaluation
+## 6. Quick Role Switching & Multi-Portal Evaluation
 
 QueueLess includes a floating **Role Demo Switcher** widget pinned to the bottom-left of every screen. Evaluators can instantly switch between:
 - **Student Profile:** Aarav Sharma (`aarav.sharma@campus.edu`, Roll: `2024CS1042`, Balance: ₹600)
@@ -105,7 +157,7 @@ QueueLess includes a floating **Role Demo Switcher** widget pinned to the bottom
 
 ---
 
-## 6. Project Structure
+## 7. Project Structure
 
 ```
 queueless/
@@ -129,6 +181,12 @@ queueless/
 │   ├── data/                     # Centralized seed mock data
 │   ├── services/                 # orderService, menuService, configService, storage
 │   └── types/                    # TypeScript interfaces
+├── Dockerfile                    # Multi-stage production Dockerfile for Frontend
+├── docker-compose.yml            # Complete 4-service production orchestrator
+├── backend/                      # Express REST API, Socket.IO & Mongoose ODM
+│   └── Dockerfile                # Multi-stage production Dockerfile for Backend
+├── worker/                       # Standalone deadline & late-fee background daemon
+│   └── Dockerfile                # Multi-stage production Dockerfile for Worker
 ├── ARCHITECTURE.md               # Full architecture & future phases specification
 ├── DEVELOPMENT_LOG.md            # Execution and implementation log
 └── package.json
@@ -136,5 +194,5 @@ queueless/
 
 ---
 
-## 7. License
+## 8. License
 Developed for Academic & Production Campus Deployments. © 2026 QueueLess Team.

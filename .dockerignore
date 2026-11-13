@@ -1,0 +1,32 @@
+# Node dependencies & caches
+node_modules
+.next
+.turbo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Git & IDE metadata
+.git
+.github
+.vscode
+.idea
+*.tsbuildinfo
+*.swp
+*.swo
+
+# Environment & Secrets (preserve .env.example only)
+.env
+.env*.local
+.env.development
+.env.production
+!.env.example
+
+# Service subdirectories (handled by their own build contexts)
+backend
+worker
+
+# Test & report artifacts
+coverage
+.system_generated

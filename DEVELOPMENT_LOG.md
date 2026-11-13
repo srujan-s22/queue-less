@@ -412,5 +412,46 @@ Executed targeted remediation for all 8 findings documented in `PHASE_03_ACCEPTA
 **Phase 3.1 Status:** COMPLETED & APPROVED.
 **Verdict:** READY FOR PHASE 4 DOCKER IMPLEMENTATION.
 
+---
+
+## 9. Phase 4: Docker & Docker Compose Containerization (Completed)
+
+### 1. Architectural Scope & Implementation
+- **Decoupled 4-Container Stack:** Maintained complete separation between Frontend (Next.js 16 standalone), Backend (Express REST + Socket.IO), Background Worker (deadline & late-fee engine), and Database (MongoDB 7).
+- **Multi-Stage Production Dockerfiles:**
+  - `backend/Dockerfile`: Multi-stage `node:22-alpine` build compiling TypeScript via `tsc` to `dist/`, running unprivileged as `node:node` on port `5001`. Image size: 71.3MB compressed.
+  - `worker/Dockerfile`: Multi-stage `node:22-alpine` daemon running `dist/index.js` as `node:node`. Image size: 66.5MB compressed.
+  - `Dockerfile` (Root): Multi-stage `node:22-alpine` with `libc6-compat` building Next.js 16 standalone output (`output: 'standalone'`). Runs as `node:node` on port `3000`. Image size: 78.5MB compressed.
+- **Root Orchestrator (`docker-compose.yml`):**
+  - Services: `mongo`, `backend`, `worker`, `frontend`.
+  - Dedicated bridge network: `queueless-network`.
+  - Persistent named volume: `queueless_mongo_data` mounted to `/data/db`.
+  - Fail-fast JWT security: `${JWT_SECRET:?FATAL: JWT_SECRET must be set in your root .env file before launching QueueLess.}` terminates Compose launch immediately if secret is missing or empty.
+  - Container-level health checks:
+    - `mongo`: `mongosh --eval "db.adminCommand('ping')" --quiet`.
+    - `backend`: Zero-dependency Node.js HTTP probe against `/api/v1/health` (checks process health and `mongoose.connection.readyState === 1`).
+    - `worker`: File-based heartbeat `/tmp/worker-heartbeat` touched strictly on successful scan cycle with active DB connection.
+    - `frontend`: Zero-dependency Node.js HTTP probe against `/api/health`.
+
+### 2. Operational Verification
+- **Container Build & Startup:** All 4 containers built natively on Apple Silicon M4 (`arm64`) and transitioned to `(healthy)`.
+- **Explicit Seeding Inside Container:** Executed `docker compose exec backend npm run seed` successfully seeding users, menus, slots, and counters.
+- **Browser-to-Backend End-to-End Workflow:** Tested via Chrome DevTools MCP on `http://localhost:3000`:
+  - Student login -> added Hyderabadi Dum Biryani to tray -> checked out with slot reservation -> order `QL-1001` (Token `C-64`) created in MongoDB.
+  - Staff terminal logged in -> incoming order displayed in real-time -> accepted -> moved to cooking -> marked ready for pickup (10-minute grace deadline calculated and active countdown rendered on student tracker) -> confirmed handover at counter (`PICKED_UP`).
+- **Database Persistence & Reconnection Test:**
+  - Executed `docker compose stop mongo`: Backend health check immediately returned `503 Service Unavailable` with `database: disconnected`. Worker gracefully logged connection loss, skipped scans, and withheld heartbeat without crashing.
+  - Executed `docker compose start mongo`: Both backend and worker automatically reconnected (`200 OK`).
+  - Verified order `QL-1001` remained completely intact in MongoDB across container restart.
+- **Regression Test Verification:**
+  - Backend tests: 6 suites, **43 / 43 passed**.
+  - Worker tests: 1 suite, **2 / 2 passed**.
+  - TypeScript: **0 errors** across Root, Backend, and Worker (`npx tsc --noEmit`).
+  - ESLint: **0 errors**.
+
+**Phase 4 Status:** COMPLETED & VERIFIED.
+**Verdict:** READY FOR PHASE 5 KUBERNETES ORCHESTRATION.
+
+
 
 

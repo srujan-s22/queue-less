@@ -1,0 +1,96 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - queueless-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      PORT: 5001
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongo:27017/queueless
+      # Fails fast at Compose launch if JWT_SECRET is unset or empty in .env
+      JWT_SECRET: "${JWT_SECRET:?FATAL: JWT_SECRET must be set in your root .env file before launching QueueLess.}"
+      JWT_EXPIRES_IN: 24h
+      CLIENT_URL: http://localhost:3000,http://127.0.0.1:3000
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - queueless-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5001/api/v1/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1));"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongo:27017/queueless
+      POLL_INTERVAL_MS: 15000
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - queueless-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "const fs=require('fs'); if(!fs.existsSync('/tmp/worker-heartbeat') || Date.now() - fs.statSync('/tmp/worker-heartbeat').mtimeMs > 45000) process.exit(1);"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5001/api/v1
+        NEXT_PUBLIC_SOCKET_URL: http://localhost:5001
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - queueless-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1));"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  mongo_data:
+    name: queueless_mongo_data
+
+networks:
+  queueless-network:
+    name: queueless-network
+    driver: bridge

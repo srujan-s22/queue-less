@@ -71,6 +71,44 @@ QueueLess supports dual-channel authentication:
 
 ## 4. Endpoints Reference
 
+### 4.0 System Health Probes (`/api/v1/health`, `/api/health`)
+
+#### `GET /api/v1/health`
+Backend and database health probe used by Docker Compose and container orchestrators.
+
+- **Access:** Public
+- **Response (`200 OK` — Healthy):**
+```json
+{
+  "status": "ok",
+  "service": "queueless-backend",
+  "database": "connected",
+  "timestamp": "2026-11-13T16:53:00.912Z"
+}
+```
+- **Response (`503 Service Unavailable` — Degraded / DB Disconnected):**
+```json
+{
+  "status": "degraded",
+  "service": "queueless-backend",
+  "database": "disconnected",
+  "timestamp": "2026-11-13T16:57:55.713Z"
+}
+```
+
+#### `GET /api/health`
+Frontend Next.js server health probe.
+
+- **Access:** Public
+- **Response (`200 OK`):**
+```json
+{
+  "status": "ok",
+  "service": "queueless-frontend",
+  "timestamp": "2026-11-13T16:53:00.930Z"
+}
+```
+
 ### 4.1 Authentication (`/api/v1/auth`)
 
 #### `POST /api/v1/auth/register`
