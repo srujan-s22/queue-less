@@ -49,29 +49,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FBFBF9] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F5F5F3] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <Link href="/" className="inline-flex items-center gap-2.5 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#1B4332] text-white flex items-center justify-center shadow-xs">
-            <UtensilsCrossed className="w-6 h-6 text-[#34D399]" />
+          <div className="w-10 h-10 rounded-xl bg-[#252525] text-white flex items-center justify-center shadow-2xs">
+            <UtensilsCrossed className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-2xl tracking-tight text-[#1A1C1E]">
-            Queue<span className="text-[#1B4332]">Less</span>
+          <span className="font-bold text-2xl tracking-tight text-[#252525]">
+            QueueLess
           </span>
         </Link>
-        <h1 className="text-xl font-bold tracking-tight text-[#1A1C1E] mt-2">
+        <h1 className="text-xl font-bold tracking-tight text-[#252525] mt-2">
           Sign In to Your Campus Portal
         </h1>
-        <p className="mt-1 text-xs text-[#525866]">
+        <p className="mt-1 text-xs text-[#737373]">
           Order during class • Pick up during break • Skip the queue
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-6">
+        <div className="bg-white py-8 px-6 sm:px-10 rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-6">
           {/* Quick Role Switcher Tabs */}
           <div>
-            <label className="block text-xs font-semibold text-[#1A1C1E] mb-2 text-center">
+            <label className="block text-xs font-semibold text-[#252525] mb-2 text-center">
               Select Demo Role Profile
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -80,8 +80,8 @@ export default function LoginPage() {
                 onClick={() => handleRoleQuickSelect('student')}
                 className={`py-2 px-1 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
                   selectedRole === 'student'
-                    ? 'bg-[#1B4332] text-white border-[#1B4332]'
-                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                    ? 'bg-[#252525] text-white border-[#252525]'
+                    : 'bg-[#EDEDEB] text-[#737373] border-transparent hover:bg-[#E5E7EB]'
                 }`}
               >
                 <GraduationCap className="w-4 h-4" />
@@ -93,8 +93,8 @@ export default function LoginPage() {
                 onClick={() => handleRoleQuickSelect('staff')}
                 className={`py-2 px-1 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
                   selectedRole === 'staff'
-                    ? 'bg-[#1B4332] text-white border-[#1B4332]'
-                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                    ? 'bg-[#252525] text-white border-[#252525]'
+                    : 'bg-[#EDEDEB] text-[#737373] border-transparent hover:bg-[#E5E7EB]'
                 }`}
               >
                 <ChefHat className="w-4 h-4" />
@@ -106,8 +106,8 @@ export default function LoginPage() {
                 onClick={() => handleRoleQuickSelect('admin')}
                 className={`py-2 px-1 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
                   selectedRole === 'admin'
-                    ? 'bg-[#1B4332] text-white border-[#1B4332]'
-                    : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                    ? 'bg-[#252525] text-white border-[#252525]'
+                    : 'bg-[#EDEDEB] text-[#737373] border-transparent hover:bg-[#E5E7EB]'
                 }`}
               >
                 <ShieldCheck className="w-4 h-4" />
@@ -118,7 +118,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-[#1A1C1E] mb-1.5">
+              <label className="block text-xs font-semibold text-[#252525] mb-1.5">
                 Campus Email Address
               </label>
               <input
@@ -126,12 +126,12 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-[#1B4332] text-gray-900"
+                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E5E7EB] focus:outline-none focus:border-[#252525] text-[#252525]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1A1C1E] mb-1.5">
+              <label className="block text-xs font-semibold text-[#252525] mb-1.5">
                 Password
               </label>
               <input
@@ -139,7 +139,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-[#1B4332] text-gray-900"
+                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E5E7EB] focus:outline-none focus:border-[#252525] text-[#252525]"
               />
             </div>
 
@@ -155,11 +155,11 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="pt-2 text-center text-xs text-gray-500">
+          <div className="pt-2 text-center text-xs text-[#737373]">
             <span>New student on campus? </span>
             <Link
               href="/register"
-              className="font-semibold text-[#1B4332] hover:underline"
+              className="font-semibold text-[#252525] hover:underline"
             >
               Register here
             </Link>

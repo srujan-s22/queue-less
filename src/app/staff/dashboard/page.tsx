@@ -74,16 +74,16 @@ export default function StaffDashboardPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1C1E]">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#252525]">
               Kitchen Command Center
             </h1>
-            <p className="text-xs text-[#525866] mt-0.5">
+            <p className="text-xs text-[#737373] mt-0.5">
               Live operational order flow for Express Counter #2.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white border border-[#E5E7EB] text-[#1A1C1E] flex items-center gap-1.5">
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white border border-[#E5E7EB] text-[#252525] flex items-center gap-1.5 shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Kitchen Live
             </span>
@@ -96,7 +96,7 @@ export default function StaffDashboardPage() {
             label="Incoming Tickets"
             value={incomingOrders.length}
             subValue="Awaiting acceptance"
-            icon={<BellRing className="w-5 h-5" />}
+            icon={<BellRing className="w-5 h-5 text-[#252525]" />}
             trend={incomingOrders.length > 0 ? { value: 'New', isPositive: false } : undefined}
           />
           <StatCard
@@ -115,7 +115,7 @@ export default function StaffDashboardPage() {
             label="Fulfilled Today"
             value={completedOrders.length}
             subValue="Total served"
-            icon={<Archive className="w-5 h-5 text-gray-600" />}
+            icon={<Archive className="w-5 h-5 text-[#737373]" />}
           />
         </div>
 
@@ -150,12 +150,12 @@ export default function StaffDashboardPage() {
           <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5 space-y-4 shadow-2xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <ChefHat className="w-4 h-4 text-[#1B4332]" />
-                <h2 className="font-bold text-sm text-[#1A1C1E] uppercase tracking-wider">
+                <ChefHat className="w-4 h-4 text-[#252525]" />
+                <h2 className="font-bold text-sm text-[#252525] uppercase tracking-wider">
                   Active Preparation Queue ({preparingOrders.length})
                 </h2>
               </div>
-              <Link href="/staff/preparation" className="text-xs font-semibold text-[#1B4332] hover:underline">
+              <Link href="/staff/preparation" className="text-xs font-semibold text-[#252525] hover:underline">
                 View Kanban
               </Link>
             </div>
@@ -165,31 +165,31 @@ export default function StaffDashboardPage() {
                 {preparingOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="p-3.5 rounded-xl border border-gray-200 bg-[#FAF9F6] space-y-2.5"
+                    className="p-3.5 rounded-xl border border-[#E5E7EB] bg-white space-y-2.5 shadow-2xs"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-base bg-[#1B4332] text-white px-2 py-0.5 rounded-md">
+                        <span className="font-mono font-bold text-base bg-[#252525] text-white px-2 py-0.5 rounded-md">
                           {order.tokenNumber}
                         </span>
-                        <span className="text-xs font-semibold text-gray-800">
+                        <span className="text-xs font-semibold text-[#252525]">
                           Order #{order.id}
                         </span>
                       </div>
                       <OrderStatusBadge status={order.status} size="sm" />
                     </div>
 
-                    <div className="text-xs text-gray-700">
-                      <p className="font-medium text-gray-900">
+                    <div className="text-xs text-[#737373]">
+                      <p className="font-medium text-[#252525]">
                         {order.items.map((i) => `${i.menuItem.name} × ${i.quantity}`).join(', ')}
                       </p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        Slot: <span className="font-semibold">{order.pickupSlot.label}</span> • Student:{' '}
+                      <p className="text-[11px] text-[#737373] mt-0.5">
+                        Slot: <span className="font-semibold text-[#252525]">{order.pickupSlot.label}</span> • Student:{' '}
                         {order.studentName}
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-200">
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E5E7EB]">
                       {order.status === 'ACCEPTED' ? (
                         <Button
                           onClick={() => handleStartPrep(order.id)}
@@ -214,7 +214,7 @@ export default function StaffDashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-400 py-6 text-center">No dishes currently cooking.</p>
+              <p className="text-xs text-[#737373] py-6 text-center">No dishes currently cooking.</p>
             )}
           </div>
 
@@ -223,11 +223,11 @@ export default function StaffDashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-emerald-600" />
-                <h2 className="font-bold text-sm text-[#1A1C1E] uppercase tracking-wider">
+                <h2 className="font-bold text-sm text-[#252525] uppercase tracking-wider">
                   Ready at Counter ({readyOrders.length})
                 </h2>
               </div>
-              <Link href="/staff/ready" className="text-xs font-semibold text-[#1B4332] hover:underline">
+              <Link href="/staff/ready" className="text-xs font-semibold text-[#252525] hover:underline">
                 View All
               </Link>
             </div>
@@ -237,14 +237,14 @@ export default function StaffDashboardPage() {
                 {readyOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="p-3.5 rounded-xl border border-emerald-200 bg-[#F0FDF4] space-y-2.5"
+                    className="p-3.5 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] space-y-2.5 shadow-2xs"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-base bg-emerald-700 text-white px-2 py-0.5 rounded-md">
+                        <span className="font-mono font-bold text-base bg-[#252525] text-white px-2 py-0.5 rounded-md">
                           {order.tokenNumber}
                         </span>
-                        <span className="text-xs font-semibold text-gray-900">
+                        <span className="text-xs font-semibold text-[#252525]">
                           {order.studentName} ({order.studentRollNo})
                         </span>
                       </div>
@@ -253,12 +253,12 @@ export default function StaffDashboardPage() {
                       </span>
                     </div>
 
-                    <p className="text-xs text-gray-700 font-medium">
+                    <p className="text-xs text-[#252525] font-medium">
                       {order.items.map((i) => `${i.menuItem.name} × ${i.quantity}`).join(', ')}
                     </p>
 
                     <div className="flex items-center justify-between pt-2 border-t border-emerald-100">
-                      <Link href={`/staff/orders/${order.id}`} className="text-[11px] text-gray-500 hover:underline">
+                      <Link href={`/staff/orders/${order.id}`} className="text-[11px] text-[#737373] hover:underline">
                         Order Details
                       </Link>
 
@@ -275,7 +275,7 @@ export default function StaffDashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-400 py-6 text-center">No orders waiting at counter right now.</p>
+              <p className="text-xs text-[#737373] py-6 text-center">No orders waiting at counter right now.</p>
             )}
           </div>
         </div>

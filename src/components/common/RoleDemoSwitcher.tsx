@@ -52,7 +52,7 @@ export const RoleDemoSwitcher: React.FC = () => {
 
   return (
     <div className="fixed bottom-4 left-4 z-50 select-none">
-      <div className="bg-[#1A1C1E] text-white rounded-2xl shadow-2xl border border-white/10 overflow-hidden text-xs transition-all duration-300">
+      <div className="bg-[#171717] text-white rounded-2xl shadow-2xl border border-[#262626] overflow-hidden text-xs transition-all duration-300">
         {/* Header Trigger */}
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -61,10 +61,10 @@ export const RoleDemoSwitcher: React.FC = () => {
         >
           <div className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
           <span className="text-white/60">Role:</span>
-          <span className="font-semibold capitalize text-[#34D399] flex items-center gap-1.5">
-            {role === 'student' && <GraduationCap className="w-3.5 h-3.5 inline" />}
-            {role === 'staff' && <ChefHat className="w-3.5 h-3.5 inline" />}
-            {role === 'admin' && <Shield className="w-3.5 h-3.5 inline" />}
+          <span className="font-semibold capitalize text-white flex items-center gap-1.5">
+            {role === 'student' && <GraduationCap className="w-3.5 h-3.5 inline text-[#A3A3A3]" />}
+            {role === 'staff' && <ChefHat className="w-3.5 h-3.5 inline text-[#A3A3A3]" />}
+            {role === 'admin' && <Shield className="w-3.5 h-3.5 inline text-[#A3A3A3]" />}
             {role}
           </span>
           <span className="text-white/40 text-[10px] hidden sm:inline">({user.name.split(' ')[0]})</span>
@@ -82,7 +82,7 @@ export const RoleDemoSwitcher: React.FC = () => {
                 onClick={() => handleRoleSelect('student')}
                 className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg border text-center transition-all ${
                   role === 'student'
-                    ? 'bg-[#1B4332] border-[#34D399] text-white font-semibold shadow-sm'
+                    ? 'bg-[#252525] border-[#525252] text-white font-semibold shadow-2xs'
                     : 'bg-white/5 border-transparent text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
@@ -94,7 +94,7 @@ export const RoleDemoSwitcher: React.FC = () => {
                 onClick={() => handleRoleSelect('staff')}
                 className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg border text-center transition-all ${
                   role === 'staff'
-                    ? 'bg-[#1B4332] border-[#34D399] text-white font-semibold shadow-sm'
+                    ? 'bg-[#252525] border-[#525252] text-white font-semibold shadow-2xs'
                     : 'bg-white/5 border-transparent text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >
@@ -106,7 +106,7 @@ export const RoleDemoSwitcher: React.FC = () => {
                 onClick={() => handleRoleSelect('admin')}
                 className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg border text-center transition-all ${
                   role === 'admin'
-                    ? 'bg-[#1B4332] border-[#34D399] text-white font-semibold shadow-sm'
+                    ? 'bg-[#252525] border-[#525252] text-white font-semibold shadow-2xs'
                     : 'bg-white/5 border-transparent text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
               >

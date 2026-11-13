@@ -35,9 +35,9 @@ export default function StaffOrderDetailsPage() {
     return (
       <StaffLayout>
         <div className="py-16 text-center">
-          <h2 className="text-xl font-bold text-gray-800">Order not found</h2>
-          <p className="text-gray-500 text-sm mt-1">Order #{orderId} could not be loaded.</p>
-          <Link href="/staff/dashboard" className="mt-4 inline-block text-sm font-semibold text-[#1B4332] underline">
+          <h2 className="text-xl font-bold text-[#252525]">Order not found</h2>
+          <p className="text-[#737373] text-sm mt-1">Order #{orderId} could not be loaded.</p>
+          <Link href="/staff/dashboard" className="mt-4 inline-block text-sm font-semibold text-[#252525] underline">
             Return to Command Center
           </Link>
         </div>
@@ -62,30 +62,30 @@ export default function StaffOrderDetailsPage() {
       <div className="max-w-3xl mx-auto space-y-6">
         <Link
           href="/staff/dashboard"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-900 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#737373] hover:text-[#252525] transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Back to Command Center</span>
         </Link>
 
         {/* Header Ticket Card */}
-        <div className="bg-white rounded-3xl border border-[#E5E7EB] p-6 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 shadow-2xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
             <div>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500">
+              <span className="text-[10px] uppercase font-bold tracking-widest text-[#737373]">
                 Ticket Details
               </span>
               <div className="flex items-center gap-3 mt-1">
-                <h1 className="text-2xl font-bold text-gray-900">Order #{order.id}</h1>
+                <h1 className="text-2xl font-bold text-[#252525]">Order #{order.id}</h1>
                 <OrderStatusBadge status={order.status} />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Requested Slot: <span className="font-semibold text-gray-800">{order.pickupSlot.label}</span>
+              <p className="text-xs text-[#737373] mt-1">
+                Requested Slot: <span className="font-semibold text-[#252525]">{order.pickupSlot.label}</span>
               </p>
             </div>
 
-            <div className="px-5 py-3 rounded-2xl bg-[#1B4332] text-white text-center flex-shrink-0 font-mono">
-              <span className="text-[10px] uppercase tracking-wider text-[#34D399] font-bold block">
+            <div className="px-5 py-3 rounded-xl bg-[#252525] text-white text-center flex-shrink-0 font-mono">
+              <span className="text-[10px] uppercase tracking-wider text-[#EDEDEB] font-bold block">
                 Token
               </span>
               <span className="text-2xl font-bold">{order.tokenNumber}</span>
@@ -93,18 +93,18 @@ export default function StaffOrderDetailsPage() {
           </div>
 
           {/* Student Info */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-[#FAF9F6] text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-[#EDEDEB] text-xs">
             <div>
-              <span className="text-gray-500 block">Student Customer</span>
-              <span className="font-bold text-sm text-gray-900 mt-0.5 block flex items-center gap-1.5">
-                <User className="w-4 h-4 text-gray-400" />
+              <span className="text-[#737373] block">Student Customer</span>
+              <span className="font-bold text-sm text-[#252525] mt-0.5 block flex items-center gap-1.5">
+                <User className="w-4 h-4 text-[#737373]" />
                 {order.studentName} ({order.studentRollNo})
               </span>
             </div>
             <div>
-              <span className="text-gray-500 block">Contact Phone</span>
-              <span className="font-semibold text-gray-800 mt-0.5 block flex items-center gap-1.5 font-mono">
-                <Phone className="w-4 h-4 text-gray-400" />
+              <span className="text-[#737373] block">Contact Phone</span>
+              <span className="font-semibold text-[#252525] mt-0.5 block flex items-center gap-1.5 font-mono">
+                <Phone className="w-4 h-4 text-[#737373]" />
                 {order.studentPhone}
               </span>
             </div>
@@ -112,15 +112,15 @@ export default function StaffOrderDetailsPage() {
 
           {/* Items to Cook */}
           <div>
-            <h3 className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-3">
+            <h3 className="font-bold text-xs uppercase tracking-wider text-[#737373] mb-3">
               Items Breakdown
             </h3>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-[#E5E7EB]">
               {order.items.map((i, idx) => (
                 <div key={idx} className="py-3 flex justify-between items-center text-xs">
                   <div>
-                    <span className="font-bold text-gray-900 text-sm">
-                      {i.menuItem.name} <span className="text-[#1B4332]">× {i.quantity}</span>
+                    <span className="font-bold text-[#252525] text-sm">
+                      {i.menuItem.name} <span className="text-[#252525]">× {i.quantity}</span>
                     </span>
                     {i.customizations && (
                       <p className="text-[11px] text-amber-900 mt-1 bg-amber-50 px-2 py-0.5 rounded-md inline-block">
@@ -128,7 +128,7 @@ export default function StaffOrderDetailsPage() {
                       </p>
                     )}
                   </div>
-                  <span className="font-bold text-gray-900">
+                  <span className="font-bold text-[#252525]">
                     ₹{i.menuItem.price * i.quantity}
                   </span>
                 </div>

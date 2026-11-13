@@ -60,10 +60,10 @@ export default function StaffIncomingOrdersPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1C1E]">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#252525]">
               Incoming Order Tickets ({orders.length})
             </h1>
-            <p className="text-xs text-[#525866] mt-0.5">
+            <p className="text-xs text-[#737373] mt-0.5">
               Review and accept pre-orders placed by students during lectures.
             </p>
           </div>
@@ -74,7 +74,7 @@ export default function StaffIncomingOrdersPage() {
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="bg-white rounded-2xl border-2 border-red-200 p-5 shadow-xs space-y-4 hover:border-red-400 transition-colors"
+                className="bg-white rounded-2xl border border-red-200 p-5 shadow-2xs space-y-4 hover:border-red-400 transition-colors"
               >
                 {/* Header */}
                 <div className="flex items-start justify-between">
@@ -84,10 +84,10 @@ export default function StaffIncomingOrdersPage() {
                       <span>{order.tokenNumber}</span>
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm text-[#1A1C1E]">
+                      <h3 className="font-bold text-sm text-[#252525]">
                         Order #{order.id}
                       </h3>
-                      <p className="text-xs text-[#525866] flex items-center gap-1 mt-0.5">
+                      <p className="text-xs text-[#737373] flex items-center gap-1 mt-0.5">
                         <User className="w-3.5 h-3.5" />
                         {order.studentName} ({order.studentRollNo})
                       </p>
@@ -95,43 +95,43 @@ export default function StaffIncomingOrdersPage() {
                   </div>
 
                   <div className="text-right">
-                    <span className="text-xs font-bold text-[#1B4332] block">
+                    <span className="text-xs font-bold text-[#252525] block">
                       ₹{order.total}
                     </span>
-                    <span className="text-[10px] text-gray-500 uppercase">{order.paymentMethod.replace('_', ' ')}</span>
+                    <span className="text-[10px] text-[#737373] uppercase">{order.paymentMethod.replace('_', ' ')}</span>
                   </div>
                 </div>
 
                 {/* Slot info */}
-                <div className="p-3 bg-[#FAF9F6] rounded-xl text-xs flex items-center justify-between">
-                  <span className="text-[#525866] flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-[#1B4332]" />
+                <div className="p-3 bg-[#EDEDEB] rounded-xl text-xs flex items-center justify-between">
+                  <span className="text-[#737373] flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-[#252525]" />
                     Requested Slot:
                   </span>
-                  <span className="font-bold text-[#1A1C1E]">{order.pickupSlot.label}</span>
+                  <span className="font-bold text-[#252525]">{order.pickupSlot.label}</span>
                 </div>
 
                 {/* Items */}
-                <div className="divide-y divide-gray-100 text-xs">
+                <div className="divide-y divide-[#E5E7EB] text-xs">
                   {order.items.map((i, idx) => (
                     <div key={idx} className="py-2 flex justify-between">
                       <div>
-                        <span className="font-semibold text-gray-800">
-                          {i.menuItem.name} <span className="text-gray-500">× {i.quantity}</span>
+                        <span className="font-semibold text-[#252525]">
+                          {i.menuItem.name} <span className="text-[#737373]">× {i.quantity}</span>
                         </span>
                         {i.customizations && (
-                          <span className="block text-[10px] text-gray-500 mt-0.5">
+                          <span className="block text-[10px] text-[#737373] mt-0.5">
                             {i.customizations.join(', ')}
                           </span>
                         )}
                       </div>
-                      <span className="text-gray-700">₹{i.menuItem.price * i.quantity}</span>
+                      <span className="text-[#252525]">₹{i.menuItem.price * i.quantity}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Action buttons */}
-                <div className="pt-3 border-t border-gray-100 flex items-center gap-2">
+                <div className="pt-3 border-t border-[#E5E7EB] flex items-center gap-2">
                   <button
                     onClick={() => setRejectingOrder(order)}
                     className="flex-1 py-2 px-3 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
@@ -155,7 +155,7 @@ export default function StaffIncomingOrdersPage() {
           </div>
         ) : (
           <EmptyState
-            icon={<BellRing className="w-8 h-8 text-[#1B4332]" />}
+            icon={<BellRing className="w-8 h-8 text-[#252525]" />}
             title="No pending incoming tickets"
             description="All orders have been processed into the kitchen preparation queue."
           />

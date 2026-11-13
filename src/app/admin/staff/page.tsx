@@ -78,10 +78,10 @@ export default function AdminStaffPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1C1E]">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#252525]">
               Canteen Staff & Station Management
             </h1>
-            <p className="text-xs text-[#525866] mt-0.5">
+            <p className="text-xs text-[#737373] mt-0.5">
               Roster of active kitchen operators, line cooks, and pickup counter personnel.
             </p>
           </div>
@@ -90,19 +90,19 @@ export default function AdminStaffPage() {
         {/* Counters summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-2">
-            <span className="text-xs font-semibold text-gray-500 uppercase">Station 1</span>
-            <h3 className="font-bold text-sm text-gray-900">Counter #1: Breakfast & Tawa</h3>
-            <p className="text-xs text-gray-500">1 Operator active • 25 tickets/hr peak capacity</p>
+            <span className="text-xs font-semibold text-[#737373] uppercase">Station 1</span>
+            <h3 className="font-bold text-sm text-[#252525]">Counter #1: Breakfast & Tawa</h3>
+            <p className="text-xs text-[#737373]">1 Operator active • 25 tickets/hr peak capacity</p>
           </div>
-          <div className="bg-white p-5 rounded-2xl border-2 border-[#1B4332]/30 p-5 rounded-2xl shadow-xs space-y-2">
-            <span className="text-xs font-semibold text-[#1B4332] uppercase">Station 2 (Primary)</span>
-            <h3 className="font-bold text-sm text-gray-900">Counter #2: Express Meals & Bowls</h3>
-            <p className="text-xs text-gray-500">2 Operators active • QueueLess Express Lane</p>
+          <div className="bg-white p-5 rounded-2xl border border-[#252525] shadow-2xs space-y-2">
+            <span className="text-xs font-semibold text-[#252525] uppercase">Station 2 (Primary)</span>
+            <h3 className="font-bold text-sm text-[#252525]">Counter #2: Express Meals & Bowls</h3>
+            <p className="text-xs text-[#737373]">2 Operators active • QueueLess Express Lane</p>
           </div>
           <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-2">
-            <span className="text-xs font-semibold text-gray-500 uppercase">Station 3</span>
-            <h3 className="font-bold text-sm text-gray-900">Counter #3: Beverages & Shakes</h3>
-            <p className="text-xs text-gray-500">1 Operator active • Rapid fulfillment</p>
+            <span className="text-xs font-semibold text-[#737373] uppercase">Station 3</span>
+            <h3 className="font-bold text-sm text-[#252525]">Counter #3: Beverages & Shakes</h3>
+            <p className="text-xs text-[#737373]">1 Operator active • Rapid fulfillment</p>
           </div>
         </div>
 
@@ -110,7 +110,7 @@ export default function AdminStaffPage() {
         <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#FAF9F6] border-b border-gray-200 text-[#525866] uppercase font-semibold">
+              <thead className="bg-[#EDEDEB] border-b border-[#E5E7EB] text-[#737373] uppercase font-semibold">
                 <tr>
                   <th className="p-3.5 pl-5">Staff Operator</th>
                   <th className="p-3.5">Assigned Station</th>
@@ -120,17 +120,17 @@ export default function AdminStaffPage() {
                   <th className="p-3.5 pr-5 text-right">Quick Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[#E5E7EB]">
                 {staff.map((s) => (
-                  <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={s.id} className="hover:bg-[#F5F5F3] transition-colors">
                     <td className="p-3.5 pl-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#143226] text-white flex items-center justify-center font-bold text-xs">
+                        <div className="w-9 h-9 rounded-xl bg-[#252525] text-white flex items-center justify-center font-bold text-xs">
                           {s.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-bold text-gray-900 text-sm">{s.name}</p>
-                          <p className="text-[11px] text-gray-500">{s.role}</p>
+                          <p className="font-bold text-[#252525] text-sm">{s.name}</p>
+                          <p className="text-[11px] text-[#737373]">{s.role}</p>
                         </div>
                       </div>
                     </td>

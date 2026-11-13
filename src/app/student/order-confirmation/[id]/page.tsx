@@ -26,7 +26,7 @@ export default function OrderConfirmationPage() {
         particleCount: 60,
         spread: 60,
         origin: { y: 0.7 },
-        colors: ['#1B4332', '#34D399', '#F59E0B', '#10B981'],
+        colors: ['#252525', '#10B981', '#737373', '#F59E0B'],
       });
     } catch {
       // safe fallback
@@ -37,9 +37,9 @@ export default function OrderConfirmationPage() {
     return (
       <StudentLayout>
         <div className="py-16 text-center">
-          <h2 className="text-xl font-bold text-gray-800">Order not found</h2>
-          <p className="text-gray-500 text-sm mt-1">Order #{orderId} could not be located.</p>
-          <Link href="/student/dashboard" className="mt-4 inline-block text-sm font-semibold text-[#1B4332] underline">
+          <h2 className="text-xl font-bold text-[#252525]">Order not found</h2>
+          <p className="text-[#737373] text-sm mt-1">Order #{orderId} could not be located.</p>
+          <Link href="/student/dashboard" className="mt-4 inline-block text-sm font-semibold text-[#252525] underline">
             Return to Dashboard
           </Link>
         </div>
@@ -52,28 +52,28 @@ export default function OrderConfirmationPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Celebration Header */}
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 rounded-2xl bg-[#EBF5EE] text-[#1B4332] flex items-center justify-center mx-auto shadow-xs">
-            <CheckCircle className="w-9 h-9 text-[#1B4332]" />
+          <div className="w-14 h-14 rounded-2xl bg-[#EDEDEB] text-[#10B981] flex items-center justify-center mx-auto shadow-2xs">
+            <CheckCircle className="w-8 h-8 text-[#10B981]" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1C1E]">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#252525]">
             Pre-Order Confirmed!
           </h1>
-          <p className="text-xs sm:text-sm text-[#525866]">
+          <p className="text-xs sm:text-sm text-[#737373]">
             The kitchen has received your ticket. We will prepare it for your selected slot.
           </p>
         </div>
 
         {/* Priority Token Ticket Card */}
-        <div className="bg-white rounded-3xl border-2 border-[#1B4332]/20 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-2xs overflow-hidden">
           {/* Top Ticket Header */}
-          <div className="bg-[#1B4332] text-white p-6 text-center relative">
-            <span className="text-[11px] uppercase tracking-widest text-[#34D399] font-bold block mb-1">
+          <div className="bg-[#252525] text-white p-6 text-center relative">
+            <span className="text-[11px] uppercase tracking-widest text-[#EDEDEB] font-bold block mb-1">
               Priority Pickup Token
             </span>
             <div className="text-4xl sm:text-5xl font-mono font-bold tracking-wider">
               {order.tokenNumber}
             </div>
-            <p className="text-xs text-white/70 mt-1 font-mono">
+            <p className="text-xs text-white/60 mt-1 font-mono">
               Order Ref: #{order.id}
             </p>
           </div>
@@ -81,17 +81,17 @@ export default function OrderConfirmationPage() {
           {/* Ticket Details */}
           <div className="p-6 space-y-5">
             {/* Slot & Location info */}
-            <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-[#F4F3EE] text-xs">
+            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-[#EDEDEB] text-xs">
               <div>
-                <span className="text-[#525866] block font-medium">Allocated Pickup Window</span>
-                <span className="font-bold text-sm text-[#1A1C1E] mt-0.5 block">
+                <span className="text-[#737373] block font-medium">Allocated Pickup Window</span>
+                <span className="font-bold text-sm text-[#252525] mt-0.5 block">
                   {order.pickupSlot.label}
                 </span>
               </div>
               <div>
-                <span className="text-[#525866] block font-medium">Express Collection Counter</span>
-                <span className="font-bold text-sm text-[#1B4332] mt-0.5 block flex items-center gap-1">
-                  <MapPin className="w-4 h-4 text-[#1B4332]" />
+                <span className="text-[#737373] block font-medium">Express Collection Counter</span>
+                <span className="font-bold text-sm text-[#252525] mt-0.5 block flex items-center gap-1">
+                  <MapPin className="w-4 h-4 text-[#252525]" />
                   Counter #2 (Express)
                 </span>
               </div>
@@ -99,21 +99,21 @@ export default function OrderConfirmationPage() {
 
             {/* Items Ordered */}
             <div>
-              <h3 className="font-bold text-xs uppercase tracking-wider text-[#525866] mb-3">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-[#737373] mb-3">
                 Items In Tray
               </h3>
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-[#E5E7EB]">
                 {order.items.map((i, idx) => (
                   <div key={idx} className="py-2.5 flex justify-between text-xs">
                     <div>
-                      <p className="font-semibold text-[#1A1C1E]">
-                        {i.menuItem.name} <span className="text-[#525866]">× {i.quantity}</span>
+                      <p className="font-semibold text-[#252525]">
+                        {i.menuItem.name} <span className="text-[#737373]">× {i.quantity}</span>
                       </p>
                       {i.customizations && (
-                        <p className="text-[10px] text-gray-500">{i.customizations.join(', ')}</p>
+                        <p className="text-[10px] text-[#737373]">{i.customizations.join(', ')}</p>
                       )}
                     </div>
-                    <span className="font-semibold text-[#1A1C1E]">
+                    <span className="font-semibold text-[#252525]">
                       ₹{i.menuItem.price * i.quantity}
                     </span>
                   </div>
@@ -122,7 +122,7 @@ export default function OrderConfirmationPage() {
             </div>
 
             {/* Financial summary */}
-            <div className="pt-3 border-t border-gray-100 text-xs space-y-1.5 text-[#525866]">
+            <div className="pt-3 border-t border-[#E5E7EB] text-xs space-y-1.5 text-[#737373]">
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span>₹{order.subtotal}</span>
@@ -131,17 +131,17 @@ export default function OrderConfirmationPage() {
                 <span>Packaging & GST</span>
                 <span>₹{order.packagingFee + order.tax}</span>
               </div>
-              <div className="flex justify-between text-sm font-bold text-[#1A1C1E] pt-2 border-t border-gray-200">
+              <div className="flex justify-between text-sm font-bold text-[#252525] pt-2 border-t border-[#E5E7EB]">
                 <span>Total Paid ({order.paymentMethod.replace('_', ' ')})</span>
-                <span className="text-base text-[#1B4332]">₹{order.total}</span>
+                <span className="text-base text-[#252525]">₹{order.total}</span>
               </div>
             </div>
 
             {/* Simulated QR graphic */}
-            <div className="flex items-center justify-center p-4 border border-dashed border-gray-300 rounded-2xl bg-gray-50 text-center">
+            <div className="flex items-center justify-center p-4 border border-dashed border-[#E5E7EB] rounded-xl bg-[#F5F5F3] text-center">
               <div>
-                <QrCode className="w-16 h-16 text-gray-800 mx-auto" />
-                <span className="text-[10px] text-gray-500 font-mono mt-1 block">
+                <QrCode className="w-14 h-14 text-[#252525] mx-auto" />
+                <span className="text-[10px] text-[#737373] font-mono mt-1 block">
                   Scan at Express Terminal to Collect
                 </span>
               </div>

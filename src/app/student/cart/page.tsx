@@ -37,7 +37,7 @@ export default function StudentCartPage() {
       <StudentLayout>
         <div className="max-w-2xl mx-auto py-12">
           <EmptyState
-            icon={<ShoppingBag className="w-8 h-8 text-[#1B4332]" />}
+            icon={<ShoppingBag className="w-8 h-8 text-[#252525]" />}
             title="Your food tray is currently empty"
             description="Explore our authentic campus breakfast, hot meals, wraps and beverages to place an order before your break."
             actionLabel="Browse Canteen Menu"
@@ -54,10 +54,10 @@ export default function StudentCartPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#1A1C1E]">
+            <h1 className="text-2xl font-bold tracking-tight text-[#252525]">
               Your Food Tray ({totalCount} {totalCount === 1 ? 'item' : 'items'})
             </h1>
-            <p className="text-xs text-[#525866] mt-0.5">
+            <p className="text-xs text-[#737373] mt-0.5">
               Review your meal items before choosing your campus pickup slot.
             </p>
           </div>
@@ -92,15 +92,15 @@ export default function StudentCartPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <DietaryBadge dietary={item.menuItem.dietary} />
-                      <h3 className="font-semibold text-sm text-[#1A1C1E] truncate">
+                      <h3 className="font-semibold text-sm text-[#252525] truncate">
                         {item.menuItem.name}
                       </h3>
                     </div>
-                    <p className="text-xs font-bold text-[#1B4332] mt-0.5">
+                    <p className="text-xs font-bold text-[#252525] mt-0.5">
                       ₹{item.menuItem.price} each
                     </p>
                     {item.customizations && item.customizations.length > 0 && (
-                      <p className="text-[11px] text-[#525866] mt-0.5 truncate">
+                      <p className="text-[11px] text-[#737373] mt-0.5 truncate">
                         {item.customizations.join(' • ')}
                       </p>
                     )}
@@ -109,27 +109,27 @@ export default function StudentCartPage() {
 
                 {/* Quantity & Controls */}
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="flex items-center gap-1.5 bg-[#F4F3EE] p-1 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-1.5 bg-[#EDEDEB] p-1 rounded-xl border border-[#E5E7EB]">
                     <button
                       onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
-                      className="w-7 h-7 rounded-lg bg-white text-gray-700 hover:bg-[#1B4332] hover:text-white transition-colors flex items-center justify-center font-bold"
+                      className="w-7 h-7 rounded-lg bg-white text-[#252525] hover:bg-[#252525] hover:text-white transition-colors flex items-center justify-center font-bold"
                       aria-label="Decrease quantity"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
-                    <span className="w-5 text-center text-xs font-bold text-[#1A1C1E]">
+                    <span className="w-5 text-center text-xs font-bold text-[#252525]">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
-                      className="w-7 h-7 rounded-lg bg-white text-gray-700 hover:bg-[#1B4332] hover:text-white transition-colors flex items-center justify-center font-bold"
+                      className="w-7 h-7 rounded-lg bg-white text-[#252525] hover:bg-[#252525] hover:text-white transition-colors flex items-center justify-center font-bold"
                       aria-label="Increase quantity"
                     >
                       <Plus className="w-3 h-3" />
                     </button>
                   </div>
 
-                  <span className="w-16 text-right font-bold text-sm text-[#1A1C1E]">
+                  <span className="w-16 text-right font-bold text-sm text-[#252525]">
                     ₹{item.menuItem.price * item.quantity}
                   </span>
 
@@ -147,7 +147,7 @@ export default function StudentCartPage() {
             {/* Quick add more banner */}
             <Link
               href="/student/menu"
-              className="block p-3.5 rounded-2xl border border-dashed border-gray-300 text-center text-xs font-semibold text-[#1B4332] hover:bg-[#EBF5EE] transition-colors"
+              className="block p-3.5 rounded-2xl border border-dashed border-[#E5E7EB] text-center text-xs font-semibold text-[#252525] hover:bg-[#EDEDEB] transition-colors"
             >
               + Add more items from Canteen Menu
             </Link>
@@ -155,28 +155,28 @@ export default function StudentCartPage() {
 
           {/* Order Summary & Proceed Column */}
           <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-xs space-y-4">
-              <h2 className="font-bold text-sm text-[#1A1C1E] uppercase tracking-wider">
+            <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-2xs space-y-4">
+              <h2 className="font-bold text-sm text-[#252525] uppercase tracking-wider">
                 Bill Summary
               </h2>
 
-              <div className="space-y-2 text-xs text-[#525866]">
+              <div className="space-y-2 text-xs text-[#737373]">
                 <div className="flex justify-between">
                   <span>Items Subtotal</span>
-                  <span className="font-semibold text-[#1A1C1E]">₹{subtotal}</span>
+                  <span className="font-semibold text-[#252525]">₹{subtotal}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Eco Packaging Charge</span>
-                  <span className="font-semibold text-[#1A1C1E]">₹{packagingFee}</span>
+                  <span className="font-semibold text-[#252525]">₹{packagingFee}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Campus GST (5%)</span>
-                  <span className="font-semibold text-[#1A1C1E]">₹{tax}</span>
+                  <span className="font-semibold text-[#252525]">₹{tax}</span>
                 </div>
 
-                <div className="pt-3 border-t border-gray-100 flex justify-between text-sm font-bold text-[#1A1C1E]">
+                <div className="pt-3 border-t border-[#E5E7EB] flex justify-between text-sm font-bold text-[#252525]">
                   <span>Total Payable</span>
-                  <span className="text-lg text-[#1B4332]">₹{total}</span>
+                  <span className="text-lg text-[#252525]">₹{total}</span>
                 </div>
               </div>
 
@@ -188,11 +188,11 @@ export default function StudentCartPage() {
             </div>
 
             {/* Quality and Grace Period Guarantee Notice */}
-            <div className="bg-[#EBF5EE] rounded-2xl p-4 border border-[#1B4332]/15 text-xs text-[#1B4332]">
+            <div className="bg-white rounded-2xl p-4 border border-[#E5E7EB] text-xs text-[#737373] shadow-2xs">
               <div className="flex items-start gap-2">
-                <ShieldCheck className="w-4 h-4 mt-0.5 text-[#1B4332] flex-shrink-0" />
+                <ShieldCheck className="w-4 h-4 mt-0.5 text-[#10B981] flex-shrink-0" />
                 <p className="leading-relaxed">
-                  <span className="font-semibold">QueueLess Guarantee:</span> Your order is prepared hot to match your selected pickup slot. Zero waiting in line.
+                  <span className="font-semibold text-[#252525]">QueueLess Guarantee:</span> Your order is prepared hot to match your selected pickup slot. Zero waiting in line.
                 </p>
               </div>
             </div>

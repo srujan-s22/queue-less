@@ -1,6 +1,8 @@
+'use client';
+
 import React from 'react';
 import { OrderStatus } from '@/types';
-import { CheckCircle2, Clock, ChefHat, ShoppingBag, Check } from 'lucide-react';
+import { Check, Clock, ChefHat, ShoppingBag, CheckCircle2 } from 'lucide-react';
 
 interface OrderStatusTimelineProps {
   status: OrderStatus;
@@ -27,7 +29,7 @@ const STEPS: Step[] = [
     id: 'ACCEPTED',
     label: 'Accepted',
     description: 'Kitchen queued',
-    icon: CheckCircle2,
+    icon: Check,
   },
   {
     id: 'PREPARING',
@@ -45,15 +47,26 @@ const STEPS: Step[] = [
     id: 'PICKED_UP',
     label: 'Collected',
     description: 'Order fulfilled',
-    icon: Check,
+    icon: CheckCircle2,
   },
 ];
 
 export const OrderStatusTimeline: React.FC<OrderStatusTimelineProps> = ({
   status,
 }) => {
-  const getStepIndex = (s: OrderStatus): number => {
-    switch (s) {
+  // If cancelled or rejected
+  if (status === 'CANCELLED' || status === 'REJECTED') {
+    return (
+      <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-center">
+        <p className="font-semibold text-sm">
+          This order was {status === 'REJECTED' ? 'rejected by canteen staff' : 'cancelled'}.
+        </p>
+      </div>
+    );
+  }
+
+  const getStepIndex = (current: OrderStatus): number => {
+    switch (current) {
       case 'PLACED':
         return 0;
       case 'ACCEPTED':
@@ -65,7 +78,7 @@ export const OrderStatusTimeline: React.FC<OrderStatusTimelineProps> = ({
       case 'PICKED_UP':
         return 4;
       default:
-        return -1;
+        return 0;
     }
   };
 
@@ -78,7 +91,7 @@ export const OrderStatusTimeline: React.FC<OrderStatusTimelineProps> = ({
         {/* Background track line */}
         <div className="absolute left-6 right-6 top-5 h-1 bg-[#E5E7EB] -z-0">
           <div
-            className="h-full bg-[#1B4332] transition-all duration-700 ease-in-out"
+            className="h-full bg-[#252525] transition-all duration-500 ease-in-out"
             style={{
               width: `${Math.max(0, (currentIndex / (STEPS.length - 1)) * 100)}%`,
             }}
@@ -93,28 +106,28 @@ export const OrderStatusTimeline: React.FC<OrderStatusTimelineProps> = ({
           return (
             <div key={step.id} className="relative z-10 flex flex-col items-center text-center max-w-[110px]">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
                   isCompleted
-                    ? 'bg-[#1B4332] text-white shadow-xs'
+                    ? 'bg-[#252525] text-white shadow-2xs'
                     : isCurrent
-                    ? 'bg-[#1B4332] text-white ring-4 ring-[#EBF5EE] shadow-md animate-pulse-subtle'
-                    : 'bg-white text-gray-400 border-2 border-gray-200'
+                    ? 'bg-[#252525] text-white ring-4 ring-[#EDEDEB] shadow-xs'
+                    : 'bg-white text-[#737373] border border-[#E5E7EB]'
                 }`}
               >
-                <StepIcon className="w-5 h-5" />
+                <StepIcon className="w-4 h-4" />
               </div>
               <p
                 className={`mt-2.5 text-xs font-semibold ${
                   isCurrent
-                    ? 'text-[#1B4332]'
+                    ? 'text-[#252525]'
                     : isCompleted
-                    ? 'text-[#1A1C1E]'
-                    : 'text-gray-400'
+                    ? 'text-[#252525]'
+                    : 'text-[#737373]'
                 }`}
               >
                 {step.label}
               </p>
-              <p className="text-[11px] text-[#525866] mt-0.5 leading-tight">{step.description}</p>
+              <p className="text-[11px] text-[#737373] mt-0.5 leading-tight">{step.description}</p>
             </div>
           );
         })}
@@ -128,38 +141,31 @@ export const OrderStatusTimeline: React.FC<OrderStatusTimelineProps> = ({
           const StepIcon = step.icon;
 
           return (
-            <div key={step.id} className="flex items-start gap-3 relative">
-              {idx < STEPS.length - 1 && (
-                <div
-                  className={`absolute left-4 top-8 bottom-0 w-0.5 -ml-[1px] ${
-                    isCompleted ? 'bg-[#1B4332]' : 'bg-[#E5E7EB]'
-                  }`}
-                />
-              )}
+            <div key={step.id} className="flex items-start gap-3">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
                   isCompleted
-                    ? 'bg-[#1B4332] text-white'
+                    ? 'bg-[#252525] text-white'
                     : isCurrent
-                    ? 'bg-[#1B4332] text-white ring-4 ring-[#EBF5EE]'
-                    : 'bg-white text-gray-400 border-2 border-gray-200'
+                    ? 'bg-[#252525] text-white ring-4 ring-[#EDEDEB]'
+                    : 'bg-white text-[#737373] border border-[#E5E7EB]'
                 }`}
               >
-                <StepIcon className="w-4 h-4" />
+                <StepIcon className="w-3.5 h-3.5" />
               </div>
-              <div className="pb-2">
+              <div>
                 <p
-                  className={`text-sm font-semibold ${
+                  className={`text-xs font-semibold ${
                     isCurrent
-                      ? 'text-[#1B4332]'
+                      ? 'text-[#252525]'
                       : isCompleted
-                      ? 'text-[#1A1C1E]'
-                      : 'text-gray-400'
+                      ? 'text-[#252525]'
+                      : 'text-[#737373]'
                   }`}
                 >
                   {step.label}
                 </p>
-                <p className="text-xs text-[#525866]">{step.description}</p>
+                <p className="text-[11px] text-[#737373]">{step.description}</p>
               </div>
             </div>
           );

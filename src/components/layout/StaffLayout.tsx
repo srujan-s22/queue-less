@@ -24,7 +24,7 @@ interface StaffLayoutProps {
 
 export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dynamic order counts
@@ -43,26 +43,26 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F4F3EE] flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#F5F5F3] flex flex-col md:flex-row">
       {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#1A1C1E] text-white flex-shrink-0 border-r border-white/10 select-none">
+      <aside className="hidden md:flex flex-col w-64 bg-[#171717] text-white flex-shrink-0 border-r border-[#262626] select-none">
         {/* Brand Header */}
-        <div className="p-6 border-b border-white/10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#1B4332] text-white flex items-center justify-center font-bold shadow">
-            <ChefHat className="w-6 h-6 text-[#34D399]" />
+        <div className="p-6 border-b border-[#262626] flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#252525] border border-[#383838] text-white flex items-center justify-center font-bold shadow-2xs">
+            <ChefHat className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="font-bold text-base tracking-tight leading-none text-white">QueueLess</h1>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#34D399] mt-1 block">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-[#A3A3A3] mt-1 block">
               Kitchen Operations
             </span>
           </div>
         </div>
 
         {/* Counter Info */}
-        <div className="px-6 py-4 bg-white/5 border-b border-white/5 flex items-center justify-between text-xs">
+        <div className="px-6 py-4 bg-[#1F1F1F] border-b border-[#262626] flex items-center justify-between text-xs">
           <div>
-            <span className="text-white/50 block text-[10px] uppercase">Active Station</span>
+            <span className="text-[#A3A3A3] block text-[10px] uppercase font-medium">Active Station</span>
             <span className="font-semibold text-white">Main Counter #2</span>
           </div>
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium text-[10px]">
@@ -83,8 +83,8 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
                 href={item.href}
                 className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive
-                    ? 'bg-[#1B4332] text-white shadow-xs'
-                    : 'text-white/70 hover:bg-white/5 hover:text-white'
+                    ? 'bg-[#262626] text-white border border-[#383838] shadow-2xs'
+                    : 'text-[#A3A3A3] hover:bg-[#1F1F1F] hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -95,8 +95,8 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       item.alert
-                        ? 'bg-[#EF4444] text-white animate-pulse'
-                        : 'bg-white/20 text-white'
+                        ? 'bg-[#DC2626] text-white animate-pulse'
+                        : 'bg-[#333333] text-white'
                     }`}
                   >
                     {item.count}
@@ -107,49 +107,50 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
           })}
         </nav>
 
-        {/* Operator Profile in footer */}
-        <div className="p-4 border-t border-white/10 bg-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">
+        {/* User Profile & Logout */}
+        <div className="p-4 border-t border-[#262626] bg-[#141414] flex items-center justify-between">
+          <div className="flex items-center gap-2.5 truncate">
+            <div className="w-8 h-8 rounded-lg bg-[#252525] border border-[#383838] flex items-center justify-center text-white font-bold text-xs">
               {user.name.charAt(0)}
             </div>
-            <div className="text-xs">
-              <p className="font-medium text-white leading-tight">{user.name}</p>
-              <p className="text-[10px] text-white/50">Staff Operator</p>
+            <div className="text-xs truncate">
+              <p className="font-semibold text-white truncate">{user.name}</p>
+              <p className="text-[10px] text-[#A3A3A3] truncate">Counter Operator</p>
             </div>
           </div>
-          <Link
-            href="/staff/login"
-            className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10"
+          <button
+            onClick={logout}
+            className="p-1.5 rounded-lg text-[#A3A3A3] hover:text-white hover:bg-[#252525] transition-colors"
             title="Log out"
           >
             <LogOut className="w-4 h-4" />
-          </Link>
+          </button>
         </div>
       </aside>
 
-      {/* Top Mobile Bar */}
-      <div className="md:hidden bg-[#1A1C1E] text-white p-4 flex items-center justify-between border-b border-white/10">
+      {/* Mobile Top Bar */}
+      <div className="md:hidden bg-[#171717] text-white p-4 flex items-center justify-between border-b border-[#262626]">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#1B4332] flex items-center justify-center text-white font-bold">
-            <ChefHat className="w-5 h-5 text-[#34D399]" />
+          <div className="w-8 h-8 rounded-lg bg-[#252525] border border-[#383838] flex items-center justify-center text-white">
+            <ChefHat className="w-4 h-4" />
           </div>
           <div>
-            <span className="font-bold text-sm leading-none block">QueueLess Kitchen</span>
-            <span className="text-[10px] text-emerald-400">Counter #2</span>
+            <span className="font-bold text-sm block leading-none">QueueLess</span>
+            <span className="text-[10px] text-[#A3A3A3] uppercase">Kitchen Terminal</span>
           </div>
         </div>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-lg text-white/70 hover:bg-white/10"
+          className="p-2 rounded-lg text-white hover:bg-[#252525]"
+          aria-label="Toggle menu"
         >
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
         </button>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Nav Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#1A1C1E] border-b border-white/10 p-4 space-y-1">
+        <div className="md:hidden bg-[#171717] text-white p-4 space-y-1 border-b border-[#262626]">
           {staffNav.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
@@ -159,16 +160,16 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
-                  isActive ? 'bg-[#1B4332] text-white' : 'text-white/70 hover:bg-white/5'
+                className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold ${
+                  isActive ? 'bg-[#262626] text-white' : 'text-[#A3A3A3] hover:bg-[#1F1F1F]'
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
                 </div>
                 {item.count !== undefined && item.count > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#EF4444] text-white">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#DC2626] text-white">
                     {item.count}
                   </span>
                 )}
@@ -179,11 +180,11 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <div className="max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex-1">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <div className="max-w-7xl mx-auto space-y-6">
           {children}
         </div>
-      </div>
+      </main>
     </div>
   );
 };

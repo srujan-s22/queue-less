@@ -58,23 +58,23 @@ export default function StaffReadyPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1C1E]">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#252525]">
               Ready at Pickup Counter ({orders.length})
             </h1>
-            <p className="text-xs text-[#525866] mt-0.5">
+            <p className="text-xs text-[#737373] mt-0.5">
               Orders currently staged at Express Counter #2 awaiting student collection.
             </p>
           </div>
 
           {/* Quick Token Search */}
           <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#737373] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchToken}
               onChange={(e) => setSearchToken(e.target.value)}
               placeholder="Filter by Token (e.g. A-18)..."
-              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-[#1B4332]"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#252525] text-[#252525]"
             />
           </div>
         </div>
@@ -90,20 +90,20 @@ export default function StaffReadyPage() {
                   className={`bg-white rounded-2xl border p-5 space-y-4 shadow-2xs transition-all ${
                     isLate
                       ? 'border-amber-400 bg-amber-50/30'
-                      : 'border-emerald-300 bg-emerald-50/20'
+                      : 'border-[#BBF7D0] bg-[#F0FDF4]'
                   }`}
                 >
                   {/* Top Bar with Big Token */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="font-mono font-bold text-xl px-3 py-1 rounded-xl bg-[#1B4332] text-white shadow-2xs">
+                      <span className="font-mono font-bold text-xl px-3 py-1 rounded-xl bg-[#252525] text-white shadow-2xs">
                         {order.tokenNumber}
                       </span>
                       <div>
-                        <span className="font-bold text-xs text-gray-900 block">
+                        <span className="font-bold text-xs text-[#252525] block">
                           #{order.id}
                         </span>
-                        <span className="text-[10px] text-gray-500">
+                        <span className="text-[10px] text-[#737373]">
                           {order.pickupSlot.label}
                         </span>
                       </div>
@@ -118,28 +118,28 @@ export default function StaffReadyPage() {
                   </div>
 
                   {/* Student Info */}
-                  <div className="p-2.5 bg-white rounded-xl border border-gray-200 text-xs">
-                    <p className="font-semibold text-gray-900">
+                  <div className="p-2.5 bg-white rounded-xl border border-[#E5E7EB] text-xs">
+                    <p className="font-semibold text-[#252525]">
                       {order.studentName} ({order.studentRollNo})
                     </p>
-                    <p className="text-[11px] text-gray-500 font-mono mt-0.5">
+                    <p className="text-[11px] text-[#737373] font-mono mt-0.5">
                       Phone: {order.studentPhone}
                     </p>
                   </div>
 
                   {/* Items */}
-                  <div className="divide-y divide-gray-100 text-xs">
+                  <div className="divide-y divide-[#E5E7EB] text-xs">
                     {order.items.map((i, idx) => (
                       <div key={idx} className="py-1.5 flex justify-between">
-                        <span className="font-medium text-gray-800">
-                          {i.menuItem.name} <span className="text-gray-500">× {i.quantity}</span>
+                        <span className="font-medium text-[#252525]">
+                          {i.menuItem.name} <span className="text-[#737373]">× {i.quantity}</span>
                         </span>
                       </div>
                     ))}
                   </div>
 
                   {/* Handover action */}
-                  <div className="pt-2 border-t border-gray-100">
+                  <div className="pt-2 border-t border-[#E5E7EB]">
                     <Button
                       onClick={() => handleConfirmHandover(order.id)}
                       variant="primary"
@@ -156,7 +156,7 @@ export default function StaffReadyPage() {
           </div>
         ) : (
           <EmptyState
-            icon={<CheckCircle className="w-8 h-8 text-[#1B4332]" />}
+            icon={<CheckCircle className="w-8 h-8 text-[#252525]" />}
             title="No orders staged at counter"
             description="When kitchen finishes dishes and marks them ready, they will appear here for student collection."
           />

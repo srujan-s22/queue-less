@@ -59,31 +59,31 @@ export default function StudentMenuPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1C1E]">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#252525]">
             Campus Canteen Menu
           </h1>
-          <p className="text-sm text-[#525866] mt-1">
+          <p className="text-sm text-[#737373] mt-1">
             Browse today&apos;s active kitchen catalog, filter by diet, and select items for pre-order.
           </p>
         </div>
 
         {/* Search, Dietary & Sorting Controls */}
-        <div className="bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-xs space-y-3">
+        <div className="bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-3">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             {/* Search input */}
             <div className="relative flex-1 w-full">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#737373] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search dosas, wraps, biryani, filter coffee..."
-                className="w-full pl-10 pr-4 py-2 text-sm bg-[#F9F9F7] border border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#1B4332] focus:ring-1 focus:ring-[#1B4332] text-[#1A1C1E] placeholder:text-gray-400"
+                className="w-full pl-10 pr-4 py-2 text-sm bg-[#F5F5F3] border border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#252525] focus:ring-1 focus:ring-[#252525] text-[#252525] placeholder:text-[#737373]"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#737373] hover:text-[#252525]"
                 >
                   Clear
                 </button>
@@ -92,11 +92,11 @@ export default function StudentMenuPage() {
 
             {/* Sort Dropdown */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-xs text-[#525866] whitespace-nowrap hidden lg:inline">Sort:</span>
+              <span className="text-xs text-[#737373] whitespace-nowrap hidden lg:inline">Sort:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="w-full sm:w-auto text-xs px-3 py-2 bg-[#F9F9F7] border border-[#E5E7EB] rounded-xl text-[#1A1C1E] focus:outline-none focus:border-[#1B4332]"
+                className="w-full sm:w-auto text-xs px-3 py-2 bg-[#F5F5F3] border border-[#E5E7EB] rounded-xl text-[#252525] focus:outline-none focus:border-[#252525]"
               >
                 <option value="featured">Featured / Recommended</option>
                 <option value="price-asc">Price: Low to High</option>
@@ -108,8 +108,8 @@ export default function StudentMenuPage() {
           </div>
 
           {/* Dietary Filter Pills */}
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#F3F4F6]">
-            <span className="text-xs font-semibold text-[#525866] flex items-center gap-1 mr-1">
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#E5E7EB]">
+            <span className="text-xs font-semibold text-[#737373] flex items-center gap-1 mr-1">
               <Filter className="w-3.5 h-3.5" />
               Diet:
             </span>
@@ -119,8 +119,8 @@ export default function StudentMenuPage() {
                 onClick={() => setDietaryFilter(diet)}
                 className={`text-xs px-3 py-1 rounded-lg font-medium transition-all ${
                   dietaryFilter === diet
-                    ? 'bg-[#1B4332] text-white shadow-2xs'
-                    : 'bg-[#F4F3EE] text-[#525866] hover:bg-gray-200'
+                    ? 'bg-[#252525] text-white shadow-2xs'
+                    : 'bg-[#EDEDEB] text-[#737373] hover:text-[#252525] hover:bg-[#E5E7EB]'
                 }`}
               >
                 {diet === 'all'
@@ -145,8 +145,8 @@ export default function StudentMenuPage() {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`whitespace-nowrap px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                   isSelected
-                    ? 'bg-[#1B4332] text-white shadow-2xs'
-                    : 'bg-white text-[#525866] border border-[#E5E7EB] hover:border-gray-400 hover:text-[#1A1C1E]'
+                    ? 'bg-[#252525] text-white shadow-2xs'
+                    : 'bg-white text-[#737373] border border-[#E5E7EB] hover:border-gray-400 hover:text-[#252525]'
                 }`}
               >
                 {cat.label}
@@ -158,7 +158,7 @@ export default function StudentMenuPage() {
         {/* Menu Items Grid */}
         {filteredItems.length > 0 ? (
           <div>
-            <div className="flex items-center justify-between text-xs text-[#525866] mb-3">
+            <div className="flex items-center justify-between text-xs text-[#737373] mb-3">
               <span>Showing {filteredItems.length} dishes</span>
               <span>All prices include kitchen preparation</span>
             </div>

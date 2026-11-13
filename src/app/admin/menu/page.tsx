@@ -115,10 +115,10 @@ export default function AdminMenuManagementPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1C1E]">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#252525]">
               Canteen Menu Catalog ({items.length} dishes)
             </h1>
-            <p className="text-xs text-[#525866] mt-0.5">
+            <p className="text-xs text-[#737373] mt-0.5">
               Add new meals, adjust pricing, manage categories, and configure dietary tags.
             </p>
           </div>
@@ -134,15 +134,15 @@ export default function AdminMenuManagementPage() {
         </div>
 
         {/* Search & Categories Bar */}
-        <div className="bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#737373] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search dishes..."
-              className="w-full pl-9 pr-3 py-2 text-xs bg-[#FAF9F6] border border-gray-300 rounded-xl focus:outline-none focus:border-[#143226]"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-[#F5F5F3] border border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#252525] text-[#252525]"
             />
           </div>
 
@@ -153,8 +153,8 @@ export default function AdminMenuManagementPage() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`text-xs px-3 py-1.5 rounded-xl font-semibold capitalize whitespace-nowrap transition-all ${
                   selectedCategory === cat
-                    ? 'bg-[#143226] text-white shadow-2xs'
-                    : 'bg-[#F4F3EE] text-gray-700 hover:bg-gray-200'
+                    ? 'bg-[#252525] text-white shadow-2xs'
+                    : 'bg-[#EDEDEB] text-[#737373] hover:bg-[#E5E7EB]'
                 }`}
               >
                 {cat.replace('-', ' ')}
@@ -167,7 +167,7 @@ export default function AdminMenuManagementPage() {
         <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#FAF9F6] border-b border-gray-200 text-[#525866] uppercase font-semibold">
+              <thead className="bg-[#EDEDEB] border-b border-[#E5E7EB] text-[#737373] uppercase font-semibold">
                 <tr>
                   <th className="p-3.5 pl-5">Dish</th>
                   <th className="p-3.5">Category</th>
@@ -272,12 +272,12 @@ export default function AdminMenuManagementPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Masala Dosa, Paneer Kathi Roll"
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Description
                 </label>
                 <textarea
@@ -286,13 +286,13 @@ export default function AdminMenuManagementPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Ingredients and culinary notes..."
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
+                  <label className="block font-semibold text-[#252525] mb-1">
                     Price (₹ INR)
                   </label>
                   <input
@@ -301,12 +301,12 @@ export default function AdminMenuManagementPage() {
                     min={1}
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                    className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
+                  <label className="block font-semibold text-[#252525] mb-1">
                     Prep Time (Minutes)
                   </label>
                   <input
@@ -315,20 +315,20 @@ export default function AdminMenuManagementPage() {
                     min={1}
                     value={prepTimeMinutes}
                     onChange={(e) => setPrepTimeMinutes(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                    className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
+                  <label className="block font-semibold text-[#252525] mb-1">
                     Category
                   </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as Category)}
-                    className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                    className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                   >
                     <option value="breakfast">Breakfast</option>
                     <option value="meals">Lunch & Meals</option>
@@ -339,13 +339,13 @@ export default function AdminMenuManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
+                  <label className="block font-semibold text-[#252525] mb-1">
                     Dietary Classification
                   </label>
                   <select
                     value={dietary}
                     onChange={(e) => setDietary(e.target.value as DietaryType)}
-                    className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                    className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                   >
                     <option value="veg">Pure Veg</option>
                     <option value="non-veg">Non-Veg</option>
@@ -355,7 +355,7 @@ export default function AdminMenuManagementPage() {
               </div>
 
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Food Photography URL
                 </label>
                 <input
@@ -363,7 +363,7 @@ export default function AdminMenuManagementPage() {
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
                   placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
 

@@ -76,7 +76,7 @@ export const Modal: React.FC<ModalProps> = ({
       onClick={handleBackdropClick}
       aria-labelledby={title ? titleId : undefined}
       aria-describedby={description ? descId : undefined}
-      className={`fixed inset-0 z-50 m-auto w-[92vw] ${maxWidthClasses} rounded-2xl bg-white p-0 text-[#1A1C1E] shadow-2xl border border-[#E5E7EB] backdrop:bg-black/40 backdrop:backdrop-blur-xs transition-all`}
+      className={`fixed inset-0 z-50 m-auto w-[92vw] ${maxWidthClasses} rounded-2xl bg-white p-0 text-[#252525] shadow-xl border border-[#E5E7EB] backdrop:bg-black/50 transition-all`}
       style={{
         overscrollBehavior: 'contain',
       }}
@@ -85,19 +85,19 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             {title && (
-              <h2 id={titleId} className="text-lg font-semibold text-[#1A1C1E]">
+              <h2 id={titleId} className="text-lg font-semibold text-[#252525]">
                 {title}
               </h2>
             )}
             {description && (
-              <p id={descId} className="text-xs text-[#525866] mt-1">
+              <p id={descId} className="text-xs text-[#737373] mt-1">
                 {description}
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-lg text-[#737373] hover:text-[#252525] hover:bg-[#EDEDEB] transition-colors"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />

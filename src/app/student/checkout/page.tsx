@@ -91,10 +91,10 @@ export default function StudentCheckoutPage() {
     <StudentLayout>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1C1E]">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#252525]">
             Pre-Order Checkout
           </h1>
-          <p className="text-xs text-[#525866] mt-0.5">
+          <p className="text-xs text-[#737373] mt-0.5">
             Select your scheduled lunch break collection slot and verify order specifications.
           </p>
         </div>
@@ -103,14 +103,14 @@ export default function StudentCheckoutPage() {
           {/* Main Form: Pickup Slot & Payment Method */}
           <div className="lg:col-span-2 space-y-6">
             {/* 1. Pickup Slot Section */}
-            <div className="bg-white p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] shadow-xs space-y-4">
+            <div className="bg-white p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-bold text-base text-[#1A1C1E] flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-[#1B4332]" />
+                  <h2 className="font-bold text-base text-[#252525] flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-[#252525]" />
                     <span>Select Campus Pickup Slot</span>
                   </h2>
-                  <p className="text-xs text-[#525866] mt-0.5">
+                  <p className="text-xs text-[#737373] mt-0.5">
                     Order is cooked to be ready exactly within this 15-minute window.
                   </p>
                 </div>
@@ -133,9 +133,9 @@ export default function StudentCheckoutPage() {
             </div>
 
             {/* 2. Payment Method Section */}
-            <div className="bg-white p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] shadow-xs space-y-4">
-              <h2 className="font-bold text-base text-[#1A1C1E] flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-[#1B4332]" />
+            <div className="bg-white p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-4">
+              <h2 className="font-bold text-base text-[#252525] flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-[#252525]" />
                 <span>Payment Method</span>
               </h2>
 
@@ -145,14 +145,14 @@ export default function StudentCheckoutPage() {
                   onClick={() => setPaymentMethod('campus_wallet')}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     paymentMethod === 'campus_wallet'
-                      ? 'bg-[#EBF5EE] border-[#1B4332] ring-2 ring-[#1B4332]'
-                      : 'bg-white border-gray-200 hover:border-gray-400'
+                      ? 'bg-[#EDEDEB] border-[#252525] ring-2 ring-[#252525]'
+                      : 'bg-white border-[#E5E7EB] hover:border-gray-400'
                   }`}
                 >
-                  <Wallet className="w-5 h-5 text-[#1B4332] mb-2" />
-                  <p className="font-semibold text-xs text-[#1A1C1E]">Campus Wallet</p>
-                  <p className="text-[11px] text-[#525866] mt-0.5">
-                    Balance: <span className="font-semibold text-[#1B4332]">₹{user.walletBalance ?? 450}</span>
+                  <Wallet className="w-5 h-5 text-[#252525] mb-2" />
+                  <p className="font-semibold text-xs text-[#252525]">Campus Wallet</p>
+                  <p className="text-[11px] text-[#737373] mt-0.5">
+                    Balance: <span className="font-semibold text-[#252525]">₹{user.walletBalance ?? 450}</span>
                   </p>
                 </div>
 
@@ -161,13 +161,13 @@ export default function StudentCheckoutPage() {
                   onClick={() => setPaymentMethod('upi')}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     paymentMethod === 'upi'
-                      ? 'bg-[#EBF5EE] border-[#1B4332] ring-2 ring-[#1B4332]'
-                      : 'bg-white border-gray-200 hover:border-gray-400'
+                      ? 'bg-[#EDEDEB] border-[#252525] ring-2 ring-[#252525]'
+                      : 'bg-white border-[#E5E7EB] hover:border-gray-400'
                   }`}
                 >
-                  <Smartphone className="w-5 h-5 text-[#1B4332] mb-2" />
-                  <p className="font-semibold text-xs text-[#1A1C1E]">Instant UPI</p>
-                  <p className="text-[11px] text-[#525866] mt-0.5">GPay, PhonePe, Paytm</p>
+                  <Smartphone className="w-5 h-5 text-[#252525] mb-2" />
+                  <p className="font-semibold text-xs text-[#252525]">Instant UPI</p>
+                  <p className="text-[11px] text-[#737373] mt-0.5">GPay, PhonePe, Paytm</p>
                 </div>
 
                 {/* Option 3: Netbanking */}
@@ -175,13 +175,13 @@ export default function StudentCheckoutPage() {
                   onClick={() => setPaymentMethod('netbanking')}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     paymentMethod === 'netbanking'
-                      ? 'bg-[#EBF5EE] border-[#1B4332] ring-2 ring-[#1B4332]'
-                      : 'bg-white border-gray-200 hover:border-gray-400'
+                      ? 'bg-[#EDEDEB] border-[#252525] ring-2 ring-[#252525]'
+                      : 'bg-white border-[#E5E7EB] hover:border-gray-400'
                   }`}
                 >
-                  <CreditCard className="w-5 h-5 text-[#1B4332] mb-2" />
-                  <p className="font-semibold text-xs text-[#1A1C1E]">Netbanking / Card</p>
-                  <p className="text-[11px] text-[#525866] mt-0.5">SBI, HDFC, ICICI, etc.</p>
+                  <CreditCard className="w-5 h-5 text-[#252525] mb-2" />
+                  <p className="font-semibold text-xs text-[#252525]">Netbanking / Card</p>
+                  <p className="text-[11px] text-[#737373] mt-0.5">SBI, HDFC, ICICI, etc.</p>
                 </div>
               </div>
             </div>
@@ -189,52 +189,52 @@ export default function StudentCheckoutPage() {
 
           {/* Right Column: Order Summary & Place Order */}
           <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-xs space-y-4">
-              <h3 className="font-bold text-sm text-[#1A1C1E] uppercase tracking-wider">
+            <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5 shadow-2xs space-y-4">
+              <h3 className="font-bold text-sm text-[#252525] uppercase tracking-wider">
                 Order Review
               </h3>
 
-              <div className="divide-y divide-gray-100 max-h-60 overflow-y-auto pr-1">
+              <div className="divide-y divide-[#E5E7EB] max-h-60 overflow-y-auto pr-1">
                 {items.map((i) => (
                   <div key={i.menuItem.id} className="py-2.5 flex justify-between text-xs">
                     <div>
-                      <p className="font-semibold text-[#1A1C1E]">
-                        {i.menuItem.name} <span className="text-[#525866]">× {i.quantity}</span>
+                      <p className="font-semibold text-[#252525]">
+                        {i.menuItem.name} <span className="text-[#737373]">× {i.quantity}</span>
                       </p>
                       {i.customizations && (
-                        <p className="text-[10px] text-gray-500">{i.customizations.join(', ')}</p>
+                        <p className="text-[10px] text-[#737373]">{i.customizations.join(', ')}</p>
                       )}
                     </div>
-                    <span className="font-semibold text-[#1A1C1E]">
+                    <span className="font-semibold text-[#252525]">
                       ₹{i.menuItem.price * i.quantity}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <div className="pt-3 border-t border-gray-100 space-y-2 text-xs text-[#525866]">
+              <div className="pt-3 border-t border-[#E5E7EB] space-y-2 text-xs text-[#737373]">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="font-semibold text-[#1A1C1E]">₹{subtotal}</span>
+                  <span className="font-semibold text-[#252525]">₹{subtotal}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Eco Packaging</span>
-                  <span className="font-semibold text-[#1A1C1E]">₹{packagingFee}</span>
+                  <span className="font-semibold text-[#252525]">₹{packagingFee}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>GST (5%)</span>
-                  <span className="font-semibold text-[#1A1C1E]">₹{tax}</span>
+                  <span className="font-semibold text-[#252525]">₹{tax}</span>
                 </div>
-                <div className="pt-2 border-t border-gray-200 flex justify-between text-sm font-bold text-[#1A1C1E]">
+                <div className="pt-2 border-t border-[#E5E7EB] flex justify-between text-sm font-bold text-[#252525]">
                   <span>Total Amount</span>
-                  <span className="text-xl text-[#1B4332]">₹{total}</span>
+                  <span className="text-xl text-[#252525]">₹{total}</span>
                 </div>
               </div>
 
               {selectedSlot && (
-                <div className="p-3 rounded-xl bg-[#F4F3EE] text-xs">
-                  <span className="text-[#525866] block">Selected Pickup Window:</span>
-                  <span className="font-bold text-[#1B4332]">{selectedSlot.label}</span>
+                <div className="p-3 rounded-xl bg-[#EDEDEB] text-xs">
+                  <span className="text-[#737373] block">Selected Pickup Window:</span>
+                  <span className="font-bold text-[#252525]">{selectedSlot.label}</span>
                 </div>
               )}
 

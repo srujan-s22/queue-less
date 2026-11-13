@@ -48,19 +48,19 @@ export default function StudentProfilePage() {
     <StudentLayout>
       <div className="max-w-3xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1C1E]">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#252525]">
             Student Account Profile
           </h1>
-          <p className="text-xs text-[#525866] mt-0.5">
+          <p className="text-xs text-[#737373] mt-0.5">
             Manage your campus canteen credentials, balance, and collection alerts.
           </p>
         </div>
 
         {/* Digital Campus Wallet Card */}
-        <div className="bg-[#1B4332] text-white rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="bg-[#252525] text-white rounded-2xl p-6 shadow-2xs border border-[#383838] flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-[#34D399]">
-              <Wallet className="w-8 h-8" />
+            <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center text-white">
+              <Wallet className="w-7 h-7" />
             </div>
             <div>
               <span className="text-[11px] uppercase tracking-wider text-white/70 font-semibold block">
@@ -69,7 +69,7 @@ export default function StudentProfilePage() {
               <div className="text-3xl font-bold text-white mt-0.5">
                 ₹{user.walletBalance ?? 450}
               </div>
-              <p className="text-xs text-[#34D399] mt-0.5">Instant 1-tap express checkout active</p>
+              <p className="text-xs text-[#10B981] mt-0.5">Instant 1-tap express checkout active</p>
             </div>
           </div>
 
@@ -79,7 +79,7 @@ export default function StudentProfilePage() {
               <button
                 key={amt}
                 onClick={() => handleTopupWallet(amt)}
-                className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all active:scale-95 flex items-center gap-1"
+                className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all active:scale-95 flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" />
                 ₹{amt}
@@ -89,77 +89,77 @@ export default function StudentProfilePage() {
         </div>
 
         {/* Personal Details Form */}
-        <div className="bg-white rounded-3xl border border-[#E5E7EB] p-6 shadow-xs">
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 shadow-2xs">
           <form onSubmit={handleSave} className="space-y-5">
-            <h2 className="font-bold text-sm text-[#1A1C1E] uppercase tracking-wider border-b border-gray-100 pb-3">
+            <h2 className="font-bold text-sm text-[#252525] uppercase tracking-wider border-b border-[#E5E7EB] pb-3">
               Campus Identification
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#1A1C1E] mb-1.5">
+                <label className="block text-xs font-semibold text-[#252525] mb-1.5">
                   Full Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-[#1B4332] text-gray-900"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E5E7EB] focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#1A1C1E] mb-1.5">
+                <label className="block text-xs font-semibold text-[#252525] mb-1.5">
                   Roll / Registration Number
                 </label>
                 <input
                   type="text"
                   disabled
                   value={user.rollNumber || '2024CS1042'}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 font-mono cursor-not-allowed"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E5E7EB] bg-[#EDEDEB] text-[#737373] font-mono cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#1A1C1E] mb-1.5">
+                <label className="block text-xs font-semibold text-[#252525] mb-1.5">
                   Campus Email Address
                 </label>
                 <input
                   type="email"
                   disabled
                   value={user.email}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E5E7EB] bg-[#EDEDEB] text-[#737373] cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#1A1C1E] mb-1.5">
+                <label className="block text-xs font-semibold text-[#252525] mb-1.5">
                   Mobile Number (for pickup SMS)
                 </label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-[#1B4332] text-gray-900 font-mono"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E5E7EB] focus:outline-none focus:border-[#252525] text-[#252525] font-mono"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-[#1A1C1E] mb-1.5">
+                <label className="block text-xs font-semibold text-[#252525] mb-1.5">
                   Academic Department / School
                 </label>
                 <input
                   type="text"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-[#1B4332] text-gray-900"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E5E7EB] focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
             </div>
 
             {/* Notification settings */}
-            <div className="pt-4 border-t border-gray-100 space-y-3">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-[#1A1C1E]">
+            <div className="pt-4 border-t border-[#E5E7EB] space-y-3">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-[#252525]">
                 Express Collection Alerts
               </h3>
 
@@ -169,10 +169,10 @@ export default function StudentProfilePage() {
                     type="checkbox"
                     checked={smsAlerts}
                     onChange={(e) => setSmsAlerts(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#1B4332] focus:ring-[#1B4332]"
+                    className="w-4 h-4 rounded text-[#252525] focus:ring-[#252525]"
                   />
-                  <span className="text-xs text-gray-700">
-                    Receive instant SMS when order is marked <span className="font-semibold text-[#1B4332]">Ready for Pickup</span>
+                  <span className="text-xs text-[#737373]">
+                    Receive instant SMS when order is marked <span className="font-semibold text-[#252525]">Ready for Pickup</span>
                   </span>
                 </label>
 
@@ -181,9 +181,9 @@ export default function StudentProfilePage() {
                     type="checkbox"
                     checked={whatsappAlerts}
                     onChange={(e) => setWhatsappAlerts(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#1B4332] focus:ring-[#1B4332]"
+                    className="w-4 h-4 rounded text-[#252525] focus:ring-[#252525]"
                   />
-                  <span className="text-xs text-gray-700">
+                  <span className="text-xs text-[#737373]">
                     Receive 2-minute deadline countdown reminder before late pickup fee is applied
                   </span>
                 </label>

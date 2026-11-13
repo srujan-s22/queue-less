@@ -55,25 +55,25 @@ export default function AdminSettingsPage() {
     <AdminLayout>
       <div className="max-w-4xl space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1C1E]">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#252525]">
             Campus Operational & Late Fee Configuration
           </h1>
-          <p className="text-xs text-[#525866] mt-0.5">
+          <p className="text-xs text-[#737373] mt-0.5">
             Set pickup slot order thresholds, collection deadlines, penalties, and operating hours.
           </p>
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
           {/* Section 1: Pickup Slot Caps & Intervals */}
-          <div className="bg-white rounded-3xl border border-[#E5E7EB] p-6 shadow-xs space-y-4">
-            <h2 className="font-bold text-sm text-[#1A1C1E] uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-3">
-              <Clock className="w-4 h-4 text-[#143226]" />
+          <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 shadow-2xs space-y-4">
+            <h2 className="font-bold text-sm text-[#252525] uppercase tracking-wider flex items-center gap-2 border-b border-[#E5E7EB] pb-3">
+              <Clock className="w-4 h-4 text-[#252525]" />
               <span>Pickup Slot Throttle & Capacity</span>
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Maximum Order Capacity Per Slot
                 </label>
                 <input
@@ -83,15 +83,15 @@ export default function AdminSettingsPage() {
                   max={100}
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
-                <span className="text-[11px] text-gray-500 mt-0.5 block">
+                <span className="text-[11px] text-[#737373] mt-0.5 block">
                   Prevents kitchen bottleneck by capping ticket volume per 15-min window.
                 </span>
               </div>
 
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Slot Duration (Minutes)
                 </label>
                 <input
@@ -101,9 +101,9 @@ export default function AdminSettingsPage() {
                   max={60}
                   value={slotInterval}
                   onChange={(e) => setSlotInterval(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
-                <span className="text-[11px] text-gray-500 mt-0.5 block">
+                <span className="text-[11px] text-[#737373] mt-0.5 block">
                   Standard interval for campus class break switchovers (default: 15 mins).
                 </span>
               </div>
@@ -111,15 +111,15 @@ export default function AdminSettingsPage() {
           </div>
 
           {/* Section 2: Collection Deadline & Late Pickup Fee */}
-          <div className="bg-white rounded-3xl border border-[#E5E7EB] p-6 shadow-xs space-y-4">
-            <h2 className="font-bold text-sm text-[#1A1C1E] uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-3">
+          <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 shadow-2xs space-y-4">
+            <h2 className="font-bold text-sm text-[#252525] uppercase tracking-wider flex items-center gap-2 border-b border-[#E5E7EB] pb-3">
               <AlertTriangle className="w-4 h-4 text-amber-600" />
               <span>Late Pickup Fee & Collection Policy</span>
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Grace Period (Minutes after READY)
                 </label>
                 <input
@@ -129,15 +129,15 @@ export default function AdminSettingsPage() {
                   max={60}
                   value={gracePeriod}
                   onChange={(e) => setGracePeriod(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
-                <span className="text-[11px] text-gray-500 mt-0.5 block">
+                <span className="text-[11px] text-[#737373] mt-0.5 block">
                   Countdown displayed to students once food arrives at pickup counter.
                 </span>
               </div>
 
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Late Pickup Penalty Fee (₹ INR)
                 </label>
                 <input
@@ -146,15 +146,15 @@ export default function AdminSettingsPage() {
                   min={0}
                   value={lateFee}
                   onChange={(e) => setLateFee(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
-                <span className="text-[11px] text-gray-500 mt-0.5 block">
+                <span className="text-[11px] text-[#737373] mt-0.5 block">
                   Fixed charge applied if deadline expires before student collects order.
                 </span>
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Policy Disclosure Description
                 </label>
                 <textarea
@@ -162,22 +162,22 @@ export default function AdminSettingsPage() {
                   rows={2}
                   value={lateFeePolicy}
                   onChange={(e) => setLateFeePolicy(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 3: Operating Hours & Announcement */}
-          <div className="bg-white rounded-3xl border border-[#E5E7EB] p-6 shadow-xs space-y-4">
-            <h2 className="font-bold text-sm text-[#1A1C1E] uppercase tracking-wider flex items-center gap-2 border-b border-gray-100 pb-3">
+          <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 shadow-2xs space-y-4">
+            <h2 className="font-bold text-sm text-[#252525] uppercase tracking-wider flex items-center gap-2 border-b border-[#E5E7EB] pb-3">
               <DollarSign className="w-4 h-4 text-emerald-700" />
               <span>Campus Operating Hours, Tax & Announcement</span>
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Canteen Opening Time
                 </label>
                 <input
@@ -185,12 +185,12 @@ export default function AdminSettingsPage() {
                   required
                   value={openTime}
                   onChange={(e) => setOpenTime(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Canteen Closing Time
                 </label>
                 <input
@@ -198,12 +198,12 @@ export default function AdminSettingsPage() {
                   required
                   value={closeTime}
                   onChange={(e) => setCloseTime(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Eco Packaging Fee (₹ INR)
                 </label>
                 <input
@@ -211,12 +211,12 @@ export default function AdminSettingsPage() {
                   required
                   value={packagingFee}
                   onChange={(e) => setPackagingFee(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Tax Rate (%)
                 </label>
                 <input
@@ -224,19 +224,19 @@ export default function AdminSettingsPage() {
                   required
                   value={taxPercent}
                   onChange={(e) => setTaxPercent(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-[#252525] mb-1">
                   Campus Header Announcement Banner
                 </label>
                 <input
                   type="text"
                   value={announcement}
                   onChange={(e) => setAnnouncement(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:border-[#143226]"
+                  className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
               </div>
             </div>

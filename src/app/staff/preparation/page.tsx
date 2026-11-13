@@ -48,10 +48,10 @@ export default function StaffPreparationPage() {
     <StaffLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1C1E]">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#252525]">
             Kitchen Preparation Queue ({orders.length})
           </h1>
-          <p className="text-xs text-[#525866] mt-0.5">
+          <p className="text-xs text-[#737373] mt-0.5">
             Orders currently accepted or on active cooking stations.
           </p>
         </div>
@@ -65,7 +65,7 @@ export default function StaffPreparationPage() {
                 <div
                   key={order.id}
                   className={`bg-white rounded-2xl border p-5 space-y-4 shadow-2xs transition-all ${
-                    isCooking ? 'border-amber-300 ring-2 ring-amber-100' : 'border-gray-200'
+                    isCooking ? 'border-amber-300 ring-2 ring-amber-100' : 'border-[#E5E7EB]'
                   }`}
                 >
                   {/* Top Bar */}
@@ -73,12 +73,12 @@ export default function StaffPreparationPage() {
                     <div className="flex items-center gap-2">
                       <span
                         className={`font-mono font-bold text-base px-2.5 py-1 rounded-lg text-white ${
-                          isCooking ? 'bg-amber-600' : 'bg-[#1B4332]'
+                          isCooking ? 'bg-amber-600' : 'bg-[#252525]'
                         }`}
                       >
                         {order.tokenNumber}
                       </span>
-                      <span className="text-xs font-semibold text-gray-800">
+                      <span className="text-xs font-semibold text-[#252525]">
                         #{order.id}
                       </span>
                     </div>
@@ -95,24 +95,24 @@ export default function StaffPreparationPage() {
                   </div>
 
                   {/* Student & Slot info */}
-                  <div className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-xl space-y-1">
-                    <p className="flex items-center gap-1.5 font-medium text-gray-900">
-                      <User className="w-3.5 h-3.5 text-gray-400" />
+                  <div className="text-xs text-[#737373] bg-[#EDEDEB] p-2.5 rounded-xl space-y-1">
+                    <p className="flex items-center gap-1.5 font-medium text-[#252525]">
+                      <User className="w-3.5 h-3.5 text-[#737373]" />
                       {order.studentName} ({order.studentRollNo})
                     </p>
-                    <p className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                      <Clock className="w-3.5 h-3.5 text-gray-400" />
-                      Target Slot: <span className="font-semibold text-gray-800">{order.pickupSlot.label}</span>
+                    <p className="flex items-center gap-1.5 text-[11px] text-[#737373]">
+                      <Clock className="w-3.5 h-3.5 text-[#737373]" />
+                      Target Slot: <span className="font-semibold text-[#252525]">{order.pickupSlot.label}</span>
                     </p>
                   </div>
 
                   {/* Dishes */}
-                  <div className="divide-y divide-gray-100 text-xs">
+                  <div className="divide-y divide-[#E5E7EB] text-xs">
                     {order.items.map((i, idx) => (
                       <div key={idx} className="py-2">
-                        <div className="flex justify-between font-semibold text-gray-900">
+                        <div className="flex justify-between font-semibold text-[#252525]">
                           <span>{i.menuItem.name}</span>
-                          <span className="text-[#1B4332]">× {i.quantity}</span>
+                          <span className="text-[#252525]">× {i.quantity}</span>
                         </div>
                         {i.customizations && (
                           <p className="text-[10px] text-amber-800 mt-0.5 bg-amber-50 px-1.5 py-0.5 rounded inline-block">
@@ -124,7 +124,7 @@ export default function StaffPreparationPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="pt-2 border-t border-gray-100">
+                  <div className="pt-2 border-t border-[#E5E7EB]">
                     {!isCooking ? (
                       <Button
                         onClick={() => handleStartCooking(order.id)}
@@ -153,7 +153,7 @@ export default function StaffPreparationPage() {
           </div>
         ) : (
           <EmptyState
-            icon={<ChefHat className="w-8 h-8 text-[#1B4332]" />}
+            icon={<ChefHat className="w-8 h-8 text-[#252525]" />}
             title="Kitchen prep queue is clear"
             description="No meals currently in cooking state. Check incoming orders to accept tickets."
           />

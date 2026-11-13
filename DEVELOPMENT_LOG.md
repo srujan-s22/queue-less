@@ -201,3 +201,64 @@ All mock services and interfaces are strictly typed and structured to allow seam
 - Verified live countdown timer (10m grace period) and automatic late fee application (₹20 warming surcharge) in `student/orders/QL-1042/track`.
 - Verified kitchen display workflows (Incoming, Active Preparation, Ready for Pickup, Handover) and administrative overrides.
 - All updated screenshots committed and tracked in `public/screenshots/`.
+
+---
+
+## 8. Phase 1.1: Premium Monochrome Design System Refinement
+
+### 1. Design Direction & Visual Identity Shift
+In Phase 1.1, QueueLess transitioned from its earlier gradient-heavy, green-dominant visual presentation into a refined, minimalist enterprise SaaS aesthetic (referencing tools like Linear, Vercel, Raycast, and Stripe). The user interface now emphasizes typographic clarity, subtle borders, disciplined spacing, and quiet utility.
+
+### 2. Standardized Color Palette
+- **Primary Page Background:** `#F5F5F3`
+- **Card & Surface Background:** `#FFFFFF`
+- **Primary Text:** `#252525` (high-contrast charcoal)
+- **Secondary Text:** `#737373` (neutral slate)
+- **Borders & Dividers:** `#E5E7EB`
+- **Primary Action Buttons:** `#252525` (hover `#171717`, text `#FFFFFF`, shadow-2xs)
+- **Secondary Buttons & Pills:** `#FFFFFF` / `#EDEDEB` (border `#E5E7EB`, text `#252525`)
+- **Muted Accent Background:** `#EDEDEB`
+- **Restrained Semantic Colors (strictly functional):**
+  - Emerald Green (`#10B981` / `#15803D` / `#F0FDF4`): Used solely for positive confirmations, order ready states, open canteen indicators, and in-stock badges.
+  - Amber (`#F59E0B` / `#B45309` / `#FFFBEB`): Used for cooking status, capacity warnings, and countdown notices.
+  - Red (`#DC2626` / `#991B1B` / `#FEF2F2`): Used for late penalty charges, ticket rejections, and out-of-stock Item 86 states.
+  - Blue (`#1D4ED8` / `#EFF6FF`): Used for accepted tickets and queued states.
+
+### 3. Removal of Visual Clutter
+- **Eliminated all decorative gradient backgrounds:** Removed hero gradients, mesh blobs, and colored section backgrounds.
+- **Removed glowing circles and ambient blurs:** Eliminated `blur-3xl` and decorative background shapes across all portals.
+- **Removed colored shadows and excess glassmorphism:** Replaced heavy drop shadows and colored glows with crisp, subtle `shadow-2xs` and `border-[#E5E7EB]`.
+- **Preserved vibrant food photography:** Maintained natural color saturation and high-resolution Unsplash assets for culinary dishes.
+
+### 4. Comprehensive Page-by-Page Refinement
+- **Root & Global Tokens:** Updated `src/app/globals.css`, `src/app/layout.tsx`, and core UI components (`Button`, `Badge`, `StatCard`, `Modal`, `EmptyState`).
+- **Landing Page (`src/app/page.tsx`):** Clean monochrome hero, crisp typography, neutral 3-role cards, and subtle comparison panels.
+- **Student Portal:**
+  - `student/dashboard`: Minimalist hero card, neutral KPI metrics, clean active order card with countdown.
+  - `student/menu` & `student/menu/[id]`: Refined dietary filters, subtle search inputs, clear spice-level toggles, and clean quantity steppers.
+  - `student/cart` & `student/checkout`: Clean bill breakdown, neutral slot selector, and wallet balance card.
+  - `student/orders/[id]/track`: Minimalist counter token card (`A-18`), crisp stepper timeline, countdown warning, and clean item breakdowns.
+  - `student/order-confirmation/[id]`: Modern ticket card with prominent monospace token and QR handover scanner.
+  - `student/profile`: Clean digital wallet card (`#252525`), quick top-up buttons, and account credentials form.
+- **Staff Command Center & Kitchen Pipeline:**
+  - `StaffLayout`: Dark enterprise charcoal sidebar (`#171717`), high-contrast navigation pills, counter indicator.
+  - `staff/dashboard`, `staff/orders`, `staff/orders/[id]`, `staff/preparation`, `staff/ready`, `staff/completed`, `staff/menu`: Standardized token pills, clean operational tables, Item 86 toggle controls, and handover verification modals.
+- **Administrator Console:**
+  - `AdminLayout`: Dark enterprise charcoal sidebar (`#171717`) with active route pills.
+  - `admin/dashboard`, `admin/menu`, `admin/orders`, `admin/settings`, `admin/analytics`, `admin/staff`: Sophisticated monochrome breakdown charts, neutral stat cards, slot capacity throttles, late fee configuration forms, and master registries.
+- **Authentication Pages:**
+  - `login` & `register`: Clean centered auth cards, role selector tabs, and form controls.
+
+### 5. Verification & Acceptance
+- `npm run lint`: **0 errors, 0 warnings**.
+- `npx tsc --noEmit`: **0 TypeScript errors**.
+- `npm run build`: **Compiled successfully for all 26 routes**.
+- **Fresh Screenshots Generated:**
+  1. `01-landing-page.png`
+  2. `02-student-dashboard.png`
+  3. `03-food-menu.png`
+  4. `04-live-order-tracking.png`
+  5. `05-staff-dashboard.png`
+  6. `06-admin-dashboard.png`
+  7. `07-item-details.png`
+  8. `08-mobile-student-dashboard.png`

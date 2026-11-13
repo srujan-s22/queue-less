@@ -29,26 +29,26 @@ export const SlotSelector: React.FC<SlotSelectorProps> = ({
             onClick={() => {
               if (!isFull) onSelectSlot(slot);
             }}
-            className={`relative flex flex-col p-4 rounded-xl border transition-all duration-200 select-none ${
+            className={`relative flex flex-col p-4 rounded-xl border transition-all duration-150 select-none ${
               isFull
-                ? 'opacity-50 bg-gray-50 border-gray-200 cursor-not-allowed'
+                ? 'opacity-50 bg-[#F5F5F3] border-[#E5E7EB] cursor-not-allowed'
                 : isSelected
-                ? 'bg-[#EBF5EE] border-[#1B4332] ring-2 ring-[#1B4332] shadow-sm cursor-pointer'
-                : 'bg-white border-[#E5E7EB] hover:border-gray-400 hover:shadow-xs cursor-pointer'
+                ? 'bg-[#EDEDEB] border-[#252525] ring-2 ring-[#252525] shadow-2xs cursor-pointer'
+                : 'bg-white border-[#E5E7EB] hover:border-[#737373] hover:shadow-2xs cursor-pointer'
             }`}
           >
             {/* Top row: Slot Time & Selected check */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 font-semibold text-sm text-[#1A1C1E]">
-                <Clock className="w-4 h-4 text-[#1B4332]" />
+              <div className="flex items-center gap-1.5 font-semibold text-sm text-[#252525]">
+                <Clock className="w-4 h-4 text-[#252525]" />
                 <span>{slot.label}</span>
               </div>
-              {isSelected && <CheckCircle2 className="w-5 h-5 text-[#1B4332] flex-shrink-0" />}
+              {isSelected && <CheckCircle2 className="w-5 h-5 text-[#252525] flex-shrink-0" />}
             </div>
 
             {/* Capacity meter */}
             <div className="mt-3">
-              <div className="flex items-center justify-between text-xs text-[#525866] mb-1">
+              <div className="flex items-center justify-between text-xs text-[#737373] mb-1">
                 <span className="flex items-center gap-1">
                   <Users className="w-3.5 h-3.5" />
                   {slot.bookedCount} / {slot.capacity} orders
@@ -67,14 +67,14 @@ export const SlotSelector: React.FC<SlotSelectorProps> = ({
               </div>
 
               {/* Progress bar */}
-              <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${
+                  className={`h-full rounded-full transition-all duration-300 ${
                     isFull
                       ? 'bg-red-500'
                       : isFillingFast
                       ? 'bg-amber-500'
-                      : 'bg-[#1B4332]'
+                      : 'bg-[#252525]'
                   }`}
                   style={{ width: `${percent}%` }}
                 />
