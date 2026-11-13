@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fbfbf9;
+  --foreground: #1a1c1e;
+  --forest-primary: #1b4332;
+  --forest-hover: #143226;
+  --forest-light: #ebf5ee;
+  --ivory-warm: #f4f3ee;
+  --amber-alert: #d97706;
+  --amber-soft: #fef3c7;
+  --border-subtle: #e5e7eb;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar for sleek dashboard experience */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Smooth transitions */
+* {
+  box-sizing: border-box;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.03);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2.5s infinite ease-in-out;
+}
