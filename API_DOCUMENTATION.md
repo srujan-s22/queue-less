@@ -1,7 +1,7 @@
 # QueueLess REST API Documentation
 
 **Version:** 1.0.0  
-**Base URL:** `http://localhost:5000/api/v1`  
+**Base URL:** `http://localhost:5001/api/v1`  
 **Timezone Reference:** `Asia/Kolkata` (IST, UTC+05:30)  
 **Standard Timestamp Storage:** UTC ISO-8601  
 
@@ -258,11 +258,13 @@ List active and past pre-orders for the authenticated student.
 
 #### `GET /api/v1/orders/:id`
 Get real-time order status, preparation progress, pickup countdown, and full audit history.
+> **Identifier Support:** `:id` accepts either a 24-character hexadecimal MongoDB `ObjectId` or the human-readable `orderNumber` (e.g., `QL-1011-91`).
 
 - **Access:** `student` (own orders only), `staff`, `admin`
 
 #### `PATCH /api/v1/orders/:id/status`
 Progress order lifecycle state.
+> **Identifier Support:** `:id` accepts either MongoDB `ObjectId` or `orderNumber`.
 
 - **Access:** `staff`, `admin`
 - **Valid Transitions:**
@@ -331,6 +333,37 @@ Paginated master register with multi-criteria filtering.
   - `status`: filter by order status
   - `search`: search by order number, token, student name, or roll number
   - `startDate`, `endDate`: date range filtering
+
+#### `GET /api/v1/admin/staff`
+List all kitchen staff members, active shift statuses, and counter station assignments directly from MongoDB.
+
+- **Access:** `admin`
+
+#### `POST /api/v1/admin/staff`
+Provision a new staff member account with verified role `'staff'`.
+
+- **Access:** `admin`
+- **Request Body:**
+```json
+{
+  "name": "Kavita Nair",
+  "email": "kavita.canteen@campus.edu",
+  "password": "Password123!",
+  "phone": "+91 98765 43219",
+  "station": "Dosa & Breakfast Counter"
+}
+```
+
+#### `PATCH /api/v1/admin/staff/:id/status`
+Update a staff member's operational status between `'active'` and `'suspended'`.
+
+- **Access:** `admin`
+- **Request Body:**
+```json
+{
+  "status": "suspended"
+}
+```
 
 #### `GET /api/v1/settings`
 Fetch current operating parameters, hours, tax rate, and late-fee policies.
@@ -405,28 +438,36 @@ curl -X POST http://localhost:5000/api/v1/orders \
 
 ## 6. Real-Time Socket.IO Gateway Specification
 
-QueueLess incorporates a high-throughput Socket.IO event gateway running concurrently on the Express HTTP server (port 5000).
+QueueLess incorporates a high-throughput Socket.IO event gateway running concurrently on the Express HTTP server (default port 5001).
 
 ### 6.1 Handshake Authentication & Scoping
-- **Endpoint:** `http://localhost:5000/socket.io`
+- **Endpoint:** `http://localhost:5001/socket.io`
 - **Transport:** WebSocket with polling fallback
 - **Auth:** Extracted automatically from HTTP-only `token` cookie or `auth.token` handshake parameter.
 - **Client Connection Options:**
 ```typescript
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:5000', {
+const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001', {
   withCredentials: true,
   transports: ['websocket', 'polling'],
 });
 ```
 
-### 6.2 Connection Rooms
-Upon authentication, the server automatically joins the socket to appropriate rooms:
+### 6.2 Connection Rooms & Order-Level Authorization
+Upon authentication, the server automatically joins the socket to appropriate role rooms:
 - `student:${user._id}`: Private room for user-specific order updates.
 - `staff`: Kitchen staff room for real-time ticket arrival and cancellation.
 - `admin`: Operational oversight room.
-- `order:${orderId}`: Joined on-demand when client emits `join:order` (for granular tracking).
+
+#### Server-Side Order Room Authorization (`SOCK-AUTH-01`)
+When a client requests to subscribe to an order via `socket.emit('join:order', orderId, callback)`:
+1. **Unauthenticated Sockets:** Instantly rejected with `{ success: false, error: 'Unauthorized: Authentication required to subscribe to orders' }`.
+2. **Order Lookup:** Fetched from MongoDB using either ObjectId or `orderNumber`. If not found, rejected with `{ success: false, error: 'Order not found' }`.
+3. **Role Verification:**
+   - `staff` and `admin` sockets are granted access to any valid order.
+   - `student` sockets are checked against `order.student.toString() === socket.data.user.id`. If mismatched, rejected with 403 Forbidden: `{ success: false, error: 'Forbidden: You do not own this order' }`.
+4. **Subscription:** Upon authorization, joins both `order:${order._id}` and `order:${order.orderNumber}`. Room membership is automatically cleaned up on disconnection.
 
 ### 6.3 Event Catalog
 | Event | Trigger / Source | Target Room | Payload Summary |

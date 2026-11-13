@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Order } from '@/types';
 import { configService } from '@/services/configService';
-import { orderService } from '@/services/orderService';
 import { Clock, AlertTriangle } from 'lucide-react';
 
 interface PickupCountdownCardProps {
@@ -49,42 +48,6 @@ export const PickupCountdownCard: React.FC<PickupCountdownCardProps> = ({
     hour: '2-digit',
     minute: '2-digit',
   });
-
-  // Simulator actions for testing
-  const handleSimulateOverdue = async () => {
-    // Set deadline 5 minutes in the past
-    const overdueDeadline = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-    const updated = await orderService.updateStatus(order.id, 'READY_FOR_PICKUP');
-    if (updated) {
-      updated.pickupDeadline = overdueDeadline;
-      orderService.saveOrder(updated);
-      const finalOrder = orderService.applyLateFee(order.id) || updated;
-      if (onOrderUpdated) onOrderUpdated(finalOrder);
-    }
-  };
-
-  const handleSimulateUrgent = async () => {
-    // Set deadline 2 minutes in the future
-    const urgentDeadline = new Date(Date.now() + 2 * 60 * 1000).toISOString();
-    const updated = await orderService.updateStatus(order.id, 'READY_FOR_PICKUP');
-    if (updated) {
-      updated.pickupDeadline = urgentDeadline;
-      updated.lateFeeApplied = 0;
-      orderService.saveOrder(updated);
-      if (onOrderUpdated) onOrderUpdated(updated);
-    }
-  };
-
-  const handleResetDeadline = async () => {
-    const freshDeadline = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-    const updated = await orderService.updateStatus(order.id, 'READY_FOR_PICKUP');
-    if (updated) {
-      updated.pickupDeadline = freshDeadline;
-      updated.lateFeeApplied = 0;
-      orderService.saveOrder(updated);
-      if (onOrderUpdated) onOrderUpdated(updated);
-    }
-  };
 
   return (
     <div
@@ -154,29 +117,6 @@ export const PickupCountdownCard: React.FC<PickupCountdownCardProps> = ({
             <span className="font-bold text-[#252525]">₹{config.lateFeeConfig.lateFeeAmount}</span>
           </div>
         )}
-      </div>
-
-      {/* Simulator Evaluation Controls */}
-      <div className="mt-4 pt-3 border-t border-[#E5E7EB] flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-[11px] text-[#737373] font-medium mr-1">Demo Evaluation Controls:</span>
-        <button
-          onClick={handleSimulateUrgent}
-          className="px-2.5 py-1 rounded-lg bg-[#EDEDEB] hover:bg-[#E5E7EB] text-[#252525] font-medium transition-colors"
-        >
-          Set 2m Urgent
-        </button>
-        <button
-          onClick={handleSimulateOverdue}
-          className="px-2.5 py-1 rounded-lg bg-[#EDEDEB] hover:bg-amber-100 text-[#B45309] font-medium transition-colors"
-        >
-          Trigger Overdue & Late Fee
-        </button>
-        <button
-          onClick={handleResetDeadline}
-          className="px-2.5 py-1 rounded-lg bg-[#EDEDEB] hover:bg-[#E5E7EB] text-[#252525] font-medium transition-colors"
-        >
-          Reset 10m
-        </button>
       </div>
     </div>
   );

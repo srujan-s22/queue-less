@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import {
   Order,
   IOrder,
@@ -66,13 +66,28 @@ export const createOrder = async (
   try {
     // 4. Validate menu items and calculate true server prices
     const itemIds = dto.items.map((i) => i.menuItemId);
-    const dbMenuItems = await MenuItem.find({
-      _id: { $in: itemIds },
-      isArchived: false,
-    });
+    const validObjectIds = itemIds.filter((id) => mongoose.isValidObjectId(id));
+    const nonObjectIds = itemIds.filter((id) => !mongoose.isValidObjectId(id));
+
+    const dbMenuItems = validObjectIds.length > 0
+      ? await MenuItem.find({ _id: { $in: validObjectIds }, isArchived: false })
+      : [];
 
     const dbItemMap = new Map<string, any>();
     dbMenuItems.forEach((item) => dbItemMap.set(item._id.toString(), item));
+
+    // Support legacy mock IDs (e.g. "menu_01") mapped to seeded items
+    if (nonObjectIds.length > 0) {
+      const allActive = await MenuItem.find({ isArchived: false }).sort({ createdAt: 1 });
+      for (const nonId of nonObjectIds) {
+        if (nonId.startsWith('menu_')) {
+          const idx = parseInt(nonId.replace('menu_', ''), 10) - 1;
+          if (idx >= 0 && idx < allActive.length) {
+            dbItemMap.set(nonId, allActive[idx]);
+          }
+        }
+      }
+    }
 
     const orderItemsSnapshot: any[] = [];
     let subtotal = 0;
@@ -215,7 +230,8 @@ export const getStudentOrders = async (userId: string) => {
 };
 
 export const getOrderById = async (orderId: string, user: { id: string; role: string }) => {
-  const order = await Order.findById(orderId).populate('items.menuItemId', 'imageUrl category');
+  const query = mongoose.isValidObjectId(orderId) ? { _id: orderId } : { orderNumber: orderId };
+  const order = await Order.findOne(query).populate('items.menuItemId', 'imageUrl category');
   if (!order) {
     throw new NotFoundError('Order not found.');
   }
@@ -239,7 +255,8 @@ export const updateOrderStatus = async (
   actor: { id: string; role: 'student' | 'staff' | 'admin' },
   rejectionReason?: string
 ) => {
-  const order = await Order.findById(orderId);
+  const query = mongoose.isValidObjectId(orderId) ? { _id: orderId } : { orderNumber: orderId };
+  const order = await Order.findOne(query);
   if (!order) {
     throw new NotFoundError('Order not found.');
   }
@@ -289,7 +306,7 @@ export const updateOrderStatus = async (
   }
 
   const updatedOrder = await Order.findByIdAndUpdate(
-    orderId,
+    order._id,
     { $set: updates },
     { new: true }
   );
@@ -318,7 +335,8 @@ export const cancelOrderByStudent = async (
   userId: string,
   reason?: string
 ) => {
-  const order = await Order.findById(orderId);
+  const query = mongoose.isValidObjectId(orderId) ? { _id: orderId } : { orderNumber: orderId };
+  const order = await Order.findOne(query);
   if (!order) {
     throw new NotFoundError('Order not found.');
   }
@@ -334,7 +352,7 @@ export const cancelOrderByStudent = async (
   }
 
   return updateOrderStatus(
-    orderId,
+    order._id.toString(),
     'CANCELLED',
     { id: userId, role: 'student' },
     reason || 'Cancelled by student'

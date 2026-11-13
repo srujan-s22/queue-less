@@ -60,21 +60,14 @@ export const menuService = {
     const index = items.findIndex((item) => item.id === id);
     if (index === -1) return null;
 
-    const newAvailability = !items[index].isAvailable;
+    const previousAvailability = items[index].isAvailable;
+    const newAvailability = !previousAvailability;
 
-    // Optimistic update
-    items[index] = { ...items[index], isAvailable: newAvailability };
+    // Call backend API
+    const updated = await menuApi.toggleAvailability(id, newAvailability);
+    items[index] = updated;
     storage.set(MENU_STORAGE_KEY, items);
-
-    try {
-      const updated = await menuApi.toggleAvailability(id, newAvailability);
-      items[index] = updated;
-      storage.set(MENU_STORAGE_KEY, items);
-      return updated;
-    } catch (err) {
-      console.warn('[menuService] Toggle availability API call failed:', err);
-      return items[index];
-    }
+    return updated;
   },
 
   async saveItem(item: Partial<MenuItem> & { name: string; price: number; category: Category }): Promise<MenuItem> {

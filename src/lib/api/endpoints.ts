@@ -1,8 +1,8 @@
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
 
 export const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+  process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5001';
 
 export const ENDPOINTS = {
   // Authentication & Profile
@@ -47,6 +47,8 @@ export const ENDPOINTS = {
   // Administration & Analytics
   ADMIN: {
     ORDERS: '/admin/orders',
+    STAFF: '/admin/staff',
+    STAFF_STATUS: (id: string) => `/admin/staff/${id}/status`,
   },
   SETTINGS: {
     BASE: '/settings',

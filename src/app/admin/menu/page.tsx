@@ -26,6 +26,7 @@ export default function AdminMenuManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   // Form states
   const [name, setName] = useState('');
@@ -35,6 +36,7 @@ export default function AdminMenuManagementPage() {
   const [dietary, setDietary] = useState<DietaryType>('veg');
   const [prepTimeMinutes, setPrepTimeMinutes] = useState('8');
   const [imageUrl, setImageUrl] = useState('');
+  const [isAvailable, setIsAvailable] = useState(true);
 
   const { showToast } = useToast();
 
@@ -63,6 +65,7 @@ export default function AdminMenuManagementPage() {
     setDietary('veg');
     setPrepTimeMinutes('10');
     setImageUrl('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80');
+    setIsAvailable(true);
     setIsModalOpen(true);
   };
 
@@ -75,6 +78,7 @@ export default function AdminMenuManagementPage() {
     setDietary(item.dietary);
     setPrepTimeMinutes(String(item.prepTimeMinutes));
     setImageUrl(item.imageUrl);
+    setIsAvailable(item.isAvailable);
     setIsModalOpen(true);
   };
 
@@ -90,7 +94,7 @@ export default function AdminMenuManagementPage() {
         dietary,
         prepTimeMinutes: Number(prepTimeMinutes),
         imageUrl: imageUrl || undefined,
-        isAvailable: editingItem ? editingItem.isAvailable : true,
+        isAvailable,
       });
 
       await loadItems();
@@ -106,6 +110,27 @@ export default function AdminMenuManagementPage() {
         title: 'Save Failed',
         message: err.message || 'Unable to save menu item',
       });
+    }
+  };
+
+  const handleToggleAvailability = async (item: MenuItem) => {
+    setTogglingId(item.id);
+    try {
+      const updated = await menuService.toggleAvailability(item.id);
+      await loadItems();
+      showToast({
+        type: 'success',
+        title: updated?.isAvailable ? 'Dish In Stock' : 'Dish Marked Sold Out (86)',
+        message: `${item.name} is now ${updated?.isAvailable ? 'available for students to order' : 'marked sold out on campus menus'}.`,
+      });
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Availability Update Failed',
+        message: err.message || 'Unable to update dish status on the server',
+      });
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -244,17 +269,25 @@ export default function AdminMenuManagementPage() {
                     </td>
 
                     <td className="p-3.5">
-                      {item.isAvailable ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-semibold">
-                          <Check className="w-3 h-3 text-emerald-600" />
-                          In Stock
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 text-[11px] font-semibold">
-                          <X className="w-3 h-3 text-red-600" />
-                          Sold Out
-                        </span>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAvailability(item)}
+                        disabled={togglingId === item.id}
+                        className="transition-transform active:scale-95 disabled:opacity-50 text-left"
+                        title={item.isAvailable ? 'Click to mark as Sold Out (Item 86)' : 'Click to mark as In Stock'}
+                      >
+                        {item.isAvailable ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-semibold hover:bg-emerald-200 transition-colors cursor-pointer border border-emerald-200">
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            {togglingId === item.id ? 'Updating...' : 'In Stock'}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 text-[11px] font-semibold hover:bg-red-200 transition-colors cursor-pointer border border-red-200">
+                            <X className="w-3 h-3 text-red-600" />
+                            {togglingId === item.id ? 'Updating...' : 'Sold Out (86)'}
+                          </span>
+                        )}
+                      </button>
                     </td>
 
                     <td className="p-3.5 pr-5 text-right">
@@ -394,6 +427,19 @@ export default function AdminMenuManagementPage() {
                   placeholder="https://images.unsplash.com/photo-..."
                   className="w-full p-2.5 rounded-xl border border-[#E5E7EB] text-xs focus:outline-none focus:border-[#252525] text-[#252525]"
                 />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1 pb-1">
+                <input
+                  type="checkbox"
+                  id="isAvailableCheckbox"
+                  checked={isAvailable}
+                  onChange={(e) => setIsAvailable(e.target.checked)}
+                  className="rounded border-[#E5E7EB] text-[#252525] focus:ring-[#252525] h-4 w-4"
+                />
+                <label htmlFor="isAvailableCheckbox" className="font-semibold text-[#252525] cursor-pointer text-xs">
+                  Available for Student Pre-Orders (Uncheck to 86 / Mark Sold Out)
+                </label>
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">

@@ -16,6 +16,7 @@ import {
   Menu as MenuIcon,
   X,
   Sparkles,
+  LogOut,
 } from 'lucide-react';
 
 interface StudentLayoutProps {
@@ -25,7 +26,7 @@ interface StudentLayoutProps {
 export const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const { totalCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [config, setConfig] = useState(() => configService.getConfig());
@@ -148,6 +149,17 @@ export const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
               </div>
             </Link>
 
+            {/* Logout button */}
+            <button
+              onClick={logout}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-[#737373] hover:text-[#DC2626] hover:bg-[#FEF2F2] transition-colors"
+              title="Sign Out"
+              aria-label="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+
             {/* Mobile menu trigger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -189,6 +201,16 @@ export const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
                 </Link>
               );
             })}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                logout();
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-[#DC2626] hover:bg-[#FEF2F2] transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
           </div>
         )}
       </header>

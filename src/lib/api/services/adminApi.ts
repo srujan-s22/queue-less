@@ -13,6 +13,17 @@ export interface AdminOrderQueryParams {
   endDate?: string;
 }
 
+export interface StaffMemberDto {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  counter: string;
+  shift: string;
+  status: 'Active' | 'On Break' | 'Off Duty';
+  phone: string;
+}
+
 export const adminApi = {
   listOrders: async (
     params: AdminOrderQueryParams = {}
@@ -48,5 +59,32 @@ export const adminApi = {
   exportCsv: async (): Promise<string> => {
     const res = await apiClient<string>(ENDPOINTS.ANALYTICS.EXPORT_CSV);
     return String(res.data);
+  },
+
+  getStaff: async (): Promise<StaffMemberDto[]> => {
+    const res = await apiClient<StaffMemberDto[]>(ENDPOINTS.ADMIN.STAFF);
+    return Array.isArray(res.data) ? res.data : [];
+  },
+
+  createStaff: async (payload: {
+    name: string;
+    email: string;
+    password: string;
+    department?: string;
+    phone?: string;
+  }): Promise<StaffMemberDto> => {
+    const res = await apiClient<StaffMemberDto>(ENDPOINTS.ADMIN.STAFF, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  },
+
+  updateStaffStatus: async (id: string, status?: string): Promise<StaffMemberDto> => {
+    const res = await apiClient<StaffMemberDto>(ENDPOINTS.ADMIN.STAFF_STATUS(id), {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+    return res.data;
   },
 };

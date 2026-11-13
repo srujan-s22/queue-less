@@ -81,7 +81,8 @@ export interface CanteenConfig {
 }
 
 export interface Order {
-  id: string; // formatted as "QL-1042"
+  id: string; // MongoDB document ID (_id)
+  orderNumber?: string; // Human-readable order number, e.g. "QL-1042"
   tokenNumber: string; // formatted as "A-12"
   studentId: string;
   studentName: string;

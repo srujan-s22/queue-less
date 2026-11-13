@@ -181,7 +181,7 @@ export default function StaffDashboardPage() {
                           {order.tokenNumber}
                         </span>
                         <span className="text-xs font-semibold text-[#252525]">
-                          Order #{order.id}
+                          Order #{order.orderNumber || order.id}
                         </span>
                       </div>
                       <OrderStatusBadge status={order.status} size="sm" />

@@ -44,11 +44,14 @@ export default function StudentCheckoutPage() {
     }).catch(() => {});
   }, []);
 
-  // If cart is empty, redirect
-  if (items.length === 0) {
-    if (typeof window !== 'undefined') {
+  // If cart is empty, redirect safely inside useEffect
+  useEffect(() => {
+    if (items.length === 0) {
       router.push('/student/cart');
     }
+  }, [items.length, router]);
+
+  if (items.length === 0) {
     return null;
   }
 
@@ -74,11 +77,6 @@ export default function StudentCheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      // Deduct from wallet if wallet payment
-      if (paymentMethod === 'campus_wallet' && user.walletBalance !== undefined) {
-        updateUser({ walletBalance: user.walletBalance - total });
-      }
-
       // Create order via centralized orderService
       const newOrder = await orderService.createOrder({
         student: user,
@@ -86,6 +84,11 @@ export default function StudentCheckoutPage() {
         pickupSlot: selectedSlot,
         paymentMethod,
       });
+
+      // Deduct from wallet if wallet payment only after successful server confirmation
+      if (paymentMethod === 'campus_wallet' && user.walletBalance !== undefined) {
+        updateUser({ walletBalance: user.walletBalance - total });
+      }
 
       // Clear the cart
       clearCart();

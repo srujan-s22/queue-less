@@ -15,7 +15,10 @@ export const orderService = {
   getById(id: string): Order | undefined {
     const orders = this.getAll();
     return orders.find(
-      (o) => o.id.toLowerCase() === id.toLowerCase() || (o as any)._id === id
+      (o) =>
+        o.id.toLowerCase() === id.toLowerCase() ||
+        (o.orderNumber && o.orderNumber.toLowerCase() === id.toLowerCase()) ||
+        (o as any)._id === id
     );
   },
 
@@ -100,158 +103,61 @@ export const orderService = {
   }): Promise<Order> {
     const idempotencyKey = `idem-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
-    try {
-      // Submit order to authoritative backend
-      const backendOrder = await ordersApi.createOrder(
-        {
-          pickupSlotId: params.pickupSlot.id,
-          paymentMethod: 'counter_cash', // Standard counter collection
-          items: params.items.map((i) => ({
-            menuItemId: i.menuItem.id,
-            quantity: i.quantity,
-            selectedAddons: [],
-          })),
-        },
-        idempotencyKey
-      );
+    // Submit order directly to authoritative backend — DO NOT mask or simulate failures!
+    const backendOrder = await ordersApi.createOrder(
+      {
+        pickupSlotId: params.pickupSlot.id,
+        paymentMethod: 'counter_cash',
+        items: params.items.map((i) => ({
+          menuItemId: i.menuItem.id,
+          quantity: i.quantity,
+          selectedAddons: [],
+        })),
+      },
+      idempotencyKey
+    );
 
-      // Save to client cache
-      const orders = this.getAll();
-      orders.unshift(backendOrder);
-      storage.set(ORDERS_STORAGE_KEY, orders);
+    // Save to client cache on genuine success
+    const orders = this.getAll();
+    orders.unshift(backendOrder);
+    storage.set(ORDERS_STORAGE_KEY, orders);
 
-      // Decrement slot locally for immediate UI reactivity
-      configService.bookSlot(params.pickupSlot.id);
+    // Decrement slot locally for immediate UI reactivity
+    configService.bookSlot(params.pickupSlot.id);
 
-      return backendOrder;
-    } catch (err) {
-      console.warn('[orderService] Backend createOrder failed, falling back to local simulation:', err);
-
-      const orders = this.getAll();
-      const config = configService.getConfig();
-
-      const nextNum = 1052 + (orders.length - INITIAL_ORDERS.length);
-      const orderId = `QL-${nextNum}`;
-      const counterLetter = ['A', 'B', 'C'][Math.floor(Math.random() * 3)];
-      const tokenNumber = `${counterLetter}-${String(Math.floor(Math.random() * 89) + 10)}`;
-
-      const subtotal = params.items.reduce(
-        (sum, item) => sum + item.menuItem.price * item.quantity,
-        0
-      );
-      const tax = Math.round((subtotal * config.taxRatePercent) / 100);
-      const packagingFee = config.packagingCharge;
-      const total = subtotal + tax + packagingFee;
-
-      const now = new Date();
-      const deadline = new Date(now.getTime() + 25 * 60 * 1000).toISOString();
-
-      const newOrder: Order = {
-        id: orderId,
-        tokenNumber,
-        studentId: params.student.id,
-        studentName: params.student.name,
-        studentRollNo: params.student.rollNumber || '2024CS0000',
-        studentPhone: params.student.phone || '+91 98765 00000',
-        items: params.items,
-        subtotal,
-        tax,
-        packagingFee,
-        lateFeeApplied: 0,
-        total,
-        status: 'PLACED',
-        pickupSlot: params.pickupSlot,
-        pickupDeadline: deadline,
-        createdAt: now.toISOString(),
-        paymentMethod: params.paymentMethod,
-        paymentStatus: 'pending',
-      };
-
-      orders.unshift(newOrder);
-      storage.set(ORDERS_STORAGE_KEY, orders);
-      configService.bookSlot(params.pickupSlot.id);
-
-      return newOrder;
-    }
+    return backendOrder;
   },
 
   async updateStatus(
     orderId: string,
     newStatus: OrderStatus,
     rejectionReason?: string
-  ): Promise<Order | null> {
-    const orders = this.getAll();
-    const index = orders.findIndex(
-      (o) => o.id.toLowerCase() === orderId.toLowerCase() || (o as any)._id === orderId
-    );
-
-    // Optimistic local update
-    if (index !== -1) {
-      const current = orders[index];
-      const now = new Date();
-      const config = configService.getConfig();
-
-      const updated: Order = {
-        ...current,
-        status: newStatus,
-        rejectionReason: rejectionReason ?? current.rejectionReason,
-      };
-
-      if (newStatus === 'READY_FOR_PICKUP' && !current.readyAt) {
-        updated.readyAt = now.toISOString();
-        const gracePeriodMs = config.lateFeeConfig.gracePeriodMinutes * 60 * 1000;
-        updated.pickupDeadline = new Date(now.getTime() + gracePeriodMs).toISOString();
-      } else if (newStatus === 'PICKED_UP') {
-        updated.collectedAt = now.toISOString();
-      }
-
-      orders[index] = updated;
-      storage.set(ORDERS_STORAGE_KEY, orders);
-    }
-
-    try {
-      // Call backend API
-      const backendOrder = await ordersApi.updateStatus(orderId, newStatus, rejectionReason);
-      if (backendOrder) {
-        this.saveOrder(backendOrder);
-        return backendOrder;
-      }
-    } catch (err) {
-      console.warn('[orderService] Failed to update order status via API:', err);
-    }
-
-    return index !== -1 ? orders[index] : null;
+  ): Promise<Order> {
+    // Call backend API first — throw on failure without fake local simulation
+    const backendOrder = await ordersApi.updateStatus(orderId, newStatus, rejectionReason);
+    this.saveOrder(backendOrder);
+    return backendOrder;
   },
 
-  async handoverOrder(orderId: string): Promise<Order | null> {
-    try {
-      const backendOrder = await staffApi.handoverOrder(orderId);
-      if (backendOrder) {
-        this.saveOrder(backendOrder);
-        return backendOrder;
-      }
-    } catch (err) {
-      console.warn('[orderService] Handover API failed, updating locally:', err);
-    }
-    return this.updateStatus(orderId, 'PICKED_UP');
+  async handoverOrder(orderId: string): Promise<Order> {
+    const backendOrder = await staffApi.handoverOrder(orderId);
+    this.saveOrder(backendOrder);
+    return backendOrder;
   },
 
-  async cancelOrder(orderId: string, reason?: string): Promise<Order | null> {
-    try {
-      const cancelled = await ordersApi.cancelOrder(orderId, reason);
-      if (cancelled) {
-        this.saveOrder(cancelled);
-        return cancelled;
-      }
-    } catch (err) {
-      console.warn('[orderService] Cancel order API failed:', err);
-    }
-    return this.updateStatus(orderId, 'CANCELLED', reason);
+  async cancelOrder(orderId: string, reason?: string): Promise<Order> {
+    const cancelled = await ordersApi.cancelOrder(orderId, reason);
+    this.saveOrder(cancelled);
+    return cancelled;
   },
 
   saveOrder(updated: Order): Order {
     const orders = this.getAll();
-    const index = orders.findIndex((o) => o.id === updated.id);
+    const index = orders.findIndex(
+      (o) =>
+        o.id === updated.id ||
+        (o.orderNumber && updated.orderNumber && o.orderNumber === updated.orderNumber)
+    );
     if (index !== -1) {
       orders[index] = updated;
     } else {

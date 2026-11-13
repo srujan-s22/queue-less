@@ -95,7 +95,7 @@ export default function StaffPreparationPage() {
                         {order.tokenNumber}
                       </span>
                       <span className="text-xs font-semibold text-[#252525]">
-                        #{order.id}
+                        #{order.orderNumber || order.id}
                       </span>
                     </div>
 

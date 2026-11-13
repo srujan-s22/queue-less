@@ -97,7 +97,7 @@ export default function OrderConfirmationPage() {
               {order.tokenNumber}
             </div>
             <p className="text-xs text-white/60 mt-1 font-mono">
-              Order Ref: #{order.id}
+              Order Ref: #{order.orderNumber || order.id}
             </p>
           </div>
 

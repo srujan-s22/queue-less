@@ -246,7 +246,7 @@ export default function AdminDashboardPage() {
                         <span className="font-mono font-bold bg-[#252525] text-white px-2 py-0.5 rounded text-[11px]">
                           {order.tokenNumber}
                         </span>
-                        <span className="font-semibold text-[#252525]">#{order.id}</span>
+                        <span className="font-semibold text-[#252525]">#{order.orderNumber || order.id}</span>
                       </div>
                     </td>
                     <td className="p-3">

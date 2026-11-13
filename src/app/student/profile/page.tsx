@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/Button';
 import {
   Wallet,
   Plus,
+  LogOut,
 } from 'lucide-react';
 
 export default function StudentProfilePage() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const { showToast } = useToast();
 
   const [name, setName] = useState(user.name);
@@ -190,7 +191,17 @@ export default function StudentProfilePage() {
               </div>
             </div>
 
-            <div className="pt-4 flex justify-end">
+            <div className="pt-4 flex items-center justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={logout}
+                className="text-[#DC2626] border-[#DC2626]/20 hover:bg-[#FEF2F2]"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
               <Button type="submit" variant="primary" size="md">
                 Save Profile Changes
               </Button>

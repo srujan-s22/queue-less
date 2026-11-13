@@ -22,7 +22,7 @@ export const createApp = (): Application => {
   const configuredOrigins = env.CLIENT_URL
     ? env.CLIENT_URL.split(',').map((u) => u.trim())
     : [];
-  const defaultDevOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+  const defaultDevOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'];
   const allowedOrigins = Array.from(new Set([...configuredOrigins, ...defaultDevOrigins]));
 
   app.use(

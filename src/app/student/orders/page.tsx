@@ -152,7 +152,7 @@ export default function StudentOrderHistoryPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2.5 flex-wrap">
                         <span className="font-bold text-sm text-[#252525]">
-                          Order #{order.id}
+                          Order #{order.orderNumber || order.id}
                         </span>
                         <OrderStatusBadge status={order.status} size="sm" />
                         <span className="text-xs text-[#737373]">

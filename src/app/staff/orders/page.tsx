@@ -101,7 +101,7 @@ export default function StaffIncomingOrdersPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-sm text-[#252525]">
-                        Order #{order.id}
+                        Order #{order.orderNumber || order.id}
                       </h3>
                       <p className="text-xs text-[#737373] flex items-center gap-1 mt-0.5">
                         <User className="w-3.5 h-3.5" />

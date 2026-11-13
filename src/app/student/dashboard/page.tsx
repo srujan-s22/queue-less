@@ -123,7 +123,7 @@ export default function StudentDashboardPage() {
                 <div>
                   <div className="flex items-center gap-2.5">
                     <h2 className="font-bold text-base sm:text-lg text-[#252525]">
-                      Active Order #{activeOrder.id}
+                      Active Order #{activeOrder.orderNumber || activeOrder.id}
                     </h2>
                     <OrderStatusBadge status={activeOrder.status} />
                   </div>

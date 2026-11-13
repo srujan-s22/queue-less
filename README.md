@@ -34,17 +34,17 @@ QueueLess provides three dedicated, professionally designed workspaces:
 
 ## 3. Technology Stack
 
-### Full Stack (Phases 1, 2, and 3 - Complete)
-- **Frontend (Port 3000):** Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS v4, Socket.IO Client
-- **REST & Real-Time Gateway (Port 5000):** Node.js, Express.js, TypeScript, Mongoose ODM, Socket.IO Server
+### Full Stack (Phases 1, 2, 3, and 3.1 - Complete)
+- **Frontend (Port 3000 / 3001):** Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS v4, Socket.IO Client
+- **REST & Real-Time Gateway (Default Port 5001):** Node.js, Express.js, TypeScript, Mongoose ODM, Socket.IO Server
 - **Database (Port 27017):** MongoDB (8 collections: `users`, `menu_items`, `pickup_slots`, `orders`, `counters`, `canteen_settings`, `order_status_history`, `audit_logs`)
 - **Background Worker (`worker/`):** Standalone Node.js daemon (15s cadence) with atomic late-fee assessment
-- **Security & Integrity:** Dual HTTP-only JWT cookies + Bearer auth, bcrypt password hashing, atomic slot capacity protection, server-calculated pricing, Zod schema validation
+- **Security & Integrity:** Dual HTTP-only JWT cookies + Bearer auth, bcrypt password hashing, atomic slot capacity protection, server-calculated pricing, Zod schema validation, Socket.IO room-level student authorization
 
 ### Planned DevOps (Future Phases)
-- **Containerization:** Docker & Docker Compose
-- **Orchestration:** Kubernetes & Minikube
-- **CI/CD:** GitHub Actions & Docker Hub
+- **Phase 4:** Multi-Stage Docker Containerization (Frontend, Backend, Worker, Mongo) & Docker Compose
+- **Phase 5:** Kubernetes & Minikube Orchestration
+- **Phase 6:** CI/CD via GitHub Actions
 
 ---
 
@@ -66,11 +66,11 @@ npm install
 npm run seed
 ```
 
-### 2. Launch the Backend Server (Port 5000)
+### 2. Launch the Backend Server (Port 5001)
 ```bash
 cd backend
 npm run dev
-# Express REST API & Socket.IO Gateway active at http://localhost:5000
+# Express REST API & Socket.IO Gateway active at http://localhost:5001
 ```
 
 ### 3. Launch the Background Worker
@@ -86,22 +86,22 @@ npm run dev
 # In the repository root
 npm install
 npm run dev
-# Open http://localhost:3000 in your browser
+# Open http://localhost:3000 in your browser (or port 3001 if 3000 is occupied)
 ```
 
 ---
 
-## 5. Quick Role Switching & Demo Evaluation
+## 5. Quick Role Switching & Multi-Portal Evaluation
 
 QueueLess includes a floating **Role Demo Switcher** widget pinned to the bottom-left of every screen. Evaluators can instantly switch between:
-- **Student Profile:** Aarav Sharma (`aarav.sharma@campus.edu`, Roll: `2024CS1042`, Balance: ₹450)
+- **Student Profile:** Aarav Sharma (`aarav.sharma@campus.edu`, Roll: `2024CS1042`, Balance: ₹600)
 - **Staff Profile:** Ramesh Patel (`ramesh.canteen@campus.edu`, Counter #2 Operator)
 - **Admin Profile:** Dr. Ananya Iyer (`ananya.iyer@campus.edu`, Amenities Dean)
 
 ### Interactive Evaluation Highlights
-1. **Interactive Order Tracking:** Navigate to `/student/orders/QL-1042/track` to see the live 5-step lifecycle and real-time countdown timer. Use the **Simulate Next Status** or **Trigger Overdue & Late Fee** buttons to test state transitions.
-2. **Item 86 Kitchen Toggle:** Go to `/staff/menu`, toggle any item out of stock, and observe the immediate real-time update on `/student/menu`.
-3. **Dynamic Slot Throttling:** Adjust slot capacities in `/admin/settings` and observe the capacity meters adjust in `/student/checkout`.
+1. **Live Multi-Role Order Workflow:** Place an order on `/student/checkout`. Switch to Staff Portal (`/staff/orders`) to see the incoming ticket arrive instantly via Socket.IO. Click "Accept" -> navigate to `/staff/preparation` and click "Start Cooking" -> click "Mark Ready". Switch back to the student tracking screen (`/student/orders/[id]/track`) to watch status and countdown update automatically without page refresh.
+2. **Item 86 Kitchen & Admin Toggle:** Go to `/staff/menu` or `/admin/menu`, toggle any item (e.g. Crispy Masala Dosa) out of stock, and observe the immediate real-time update on `/student/menu` with a disabled Add button and "Sold Out (86)" badge.
+3. **Admin Staff Roster Management:** In `/admin/staff`, add new kitchen operators or cycle shift status between Active and On Break; changes persist directly to MongoDB.
 
 ---
 
