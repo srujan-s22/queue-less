@@ -1,0 +1,88 @@
+import { MenuItem, IMenuItem } from '../models';
+import { NotFoundError } from '../utils/errors';
+
+export interface MenuFilterOptions {
+  category?: string;
+  dietary?: string;
+  search?: string;
+  availableOnly?: boolean;
+}
+
+export const listMenuItems = async (filters: MenuFilterOptions = {}) => {
+  const query: any = { isArchived: false };
+
+  if (filters.category && filters.category !== 'all') {
+    query.category = filters.category;
+  }
+
+  if (filters.dietary && filters.dietary !== 'all') {
+    query.dietary = filters.dietary;
+  }
+
+  if (filters.availableOnly) {
+    query.isAvailable = true;
+  }
+
+  if (filters.search && filters.search.trim() !== '') {
+    const term = filters.search.trim();
+    query.$or = [
+      { name: { $regex: term, $options: 'i' } },
+      { description: { $regex: term, $options: 'i' } },
+    ];
+  }
+
+  const items = await MenuItem.find(query).sort({ isAvailable: -1, rating: -1, name: 1 });
+  return items;
+};
+
+export const getMenuItemById = async (id: string) => {
+  const item = await MenuItem.findOne({ _id: id, isArchived: false });
+  if (!item) {
+    throw new NotFoundError('Menu item not found or has been archived.');
+  }
+  return item;
+};
+
+export const createMenuItem = async (data: Partial<IMenuItem>) => {
+  const newItem = await MenuItem.create({
+    ...data,
+    isArchived: false,
+  });
+  return newItem;
+};
+
+export const updateMenuItem = async (id: string, updates: Partial<IMenuItem>) => {
+  const updatedItem = await MenuItem.findOneAndUpdate(
+    { _id: id, isArchived: false },
+    { $set: updates },
+    { new: true }
+  );
+  if (!updatedItem) {
+    throw new NotFoundError('Menu item not found.');
+  }
+  return updatedItem;
+};
+
+export const toggleItemAvailability = async (id: string, isAvailable: boolean) => {
+  const updatedItem = await MenuItem.findOneAndUpdate(
+    { _id: id, isArchived: false },
+    { $set: { isAvailable } },
+    { new: true }
+  );
+  if (!updatedItem) {
+    throw new NotFoundError('Menu item not found.');
+  }
+  return updatedItem;
+};
+
+export const archiveMenuItem = async (id: string) => {
+  const archived = await MenuItem.findOneAndUpdate(
+    { _id: id, isArchived: false },
+    { $set: { isArchived: true, isAvailable: false } },
+    { new: true }
+  );
+  if (!archived) {
+    throw new NotFoundError('Menu item not found.');
+  }
+  return { message: 'Menu item archived successfully' };
+};

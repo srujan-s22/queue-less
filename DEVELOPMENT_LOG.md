@@ -262,3 +262,62 @@ In Phase 1.1, QueueLess transitioned from its earlier gradient-heavy, green-domi
   6. `06-admin-dashboard.png`
   7. `07-item-details.png`
   8. `08-mobile-student-dashboard.png`
+
+---
+
+## 9. Phase 2: Backend & Database Engineering
+
+### 1. Architectural Scope & Objectives
+In Phase 2, QueueLess engineered an enterprise-grade REST API backend and autonomous background worker while preserving the existing Phase 1/1.1 Next.js 16 frontend untouched. The backend operates on port 5000 (`backend/`), backed by a persistent MongoDB database (`mongodb://localhost:27017/queueless`), with an independent background worker (`worker/`) running on a 15-second polling cadence for automatic collection deadline scanning and late-fee processing.
+
+### 2. Architecture & Tech Stack
+- **Server Runtime:** Node.js, Express.js (v4.21.2), TypeScript (v5.8.2), tsx
+- **Database & ODM:** MongoDB (v8 via Homebrew), Mongoose (v8.12.1)
+- **Authentication & Security:** bcryptjs (password hashing, cost factor 10), jsonwebtoken (24h validity), httpOnly cookies + Authorization Bearer header fallback, helmet, cors, express-rate-limit
+- **Validation Engine:** Zod (strict schema-based input parsing and sanitization)
+- **Testing Framework:** Jest, Supertest, ts-jest (in-band integration test runner)
+- **Timezone Standard:** Timestamps stored in UTC `Date` objects; formatted and evaluated in `Asia/Kolkata` (IST, UTC+05:30)
+
+### 3. Core Database Models Implemented (`backend/src/models/`)
+1. **User (`users`):** Email uniqueness, bcrypt password hash (hidden by default), role-based identity (`student` | `staff` | `admin`), student roll number, campus wallet balance, account status.
+2. **MenuItem (`menu_items`):** Name, description, category (`breakfast`, `meals`, `quick-bites`, `beverages`, `desserts`), server-enforced price, dietary tags, preparation times, image URLs, nutritional calories, allergens, add-ons, `isAvailable` (Item 86 toggle), and `isArchived` soft-deletion flag. Compound and text indexes applied.
+3. **PickupSlot (`pickup_slots`):** Slot code, start/end time, formatted label, service date (IST midnight UTC), maxCapacity (default 30), reservedCount, and real-time virtual `isAvailable`. Compound unique index on `{ date: 1, slotCode: 1 }`.
+4. **Order (`orders`):** Order number (`QL-XXXX`), token number (`A-XX`), student reference, item snapshot with immutable price snapshots, server-calculated subtotal, tax (5%), packaging fee (₹10), late fee applied (₹20), total, order status (`PLACED` -> `ACCEPTED` -> `PREPARING` -> `READY_FOR_PICKUP` -> `PICKED_UP`), pickup slot reference, counter identifier, payment method (`counter_cash`, `campus_wallet`, `upi`), payment status (`pending`, `collected`, `refunded`), `readyAt`, `pickupDeadline` (calculated as `readyAt + gracePeriodMinutes`), and `collectedAt`. Compound scan index on `{ status: 1, pickupDeadline: 1, lateFeeApplied: 1 }`.
+5. **Counter (`counters`):** Counter identifier, name, assigned categories, operator reference, online status.
+6. **CanteenSettings (`canteen_settings`):** Global singleton containing canteen operating hours, packaging charge, tax rate, grace period (10 mins), late fee amount (₹20), and late fee toggle.
+7. **OrderStatusHistory (`order_status_history`):** Complete immutable audit log of status progressions, timestamps, actor roles, and change reasons.
+8. **AuditLog (`audit_logs`):** Administrative and system event logs (settings edits, late-fee deductions).
+
+### 4. Concurrency & Slot Capacity Protection
+Pickup slot bookings use atomic MongoDB find-and-modify queries:
+```typescript
+const reservedSlot = await PickupSlot.findOneAndUpdate(
+  {
+    _id: slotId,
+    isActive: true,
+    $expr: { $lt: ['$reservedCount', '$maxCapacity'] }
+  },
+  { $inc: { reservedCount: 1 } },
+  { new: true }
+);
+```
+If the slot is full, the query returns `null` and the API responds immediately with `409 Conflict`. If an order is cancelled or rejected while in `PLACED` status, the capacity is atomically decremented.
+
+### 5. Server-Enforced Pricing
+Client item prices, subtotals, and totals are never trusted. The order service queries the database for actual prices and addon prices, computing subtotal, packaging fee (from settings), and tax before creating the order.
+
+### 6. Standalone Background Worker (`worker/`)
+- Polls MongoDB every 15 seconds.
+- Queries `{ status: 'READY_FOR_PICKUP', pickupDeadline: { $lt: new Date() }, lateFeeApplied: 0 }`.
+- Executes atomic `$set: { lateFeeApplied: 20 }, $inc: { total: 20 }`.
+- Guarantees exactly-once late penalty enforcement across process restarts or multiple worker replicas.
+- Records entries in `OrderStatusHistory` and `AuditLog`.
+
+### 7. Verification & Test Results
+- **Database Seed Script:** Populated default settings, 3 demo users (`student123`, `staff123`, `admin123`), 12 menu items with addons, 3 counters, and 6 pickup slots for today. Verified in MongoDB via `mongosh`.
+- **Backend Test Suite (`backend/`):** 5 test suites, **27 passed, 27 total** (100% pass rate).
+- **Worker Test Suite (`worker/`):** 1 test suite, **2 passed, 2 total** (100% pass rate).
+- **TypeScript Compilation:** Zero errors across `backend/` and `worker/`.
+- **Production Builds:** `npm run build` succeeds cleanly for `backend/` and `worker/`.
+- **Frontend Regression Protection:** Next.js root `npm run lint` (0 errors), `npx tsc --noEmit` (0 errors), and `npm run build` (26/26 routes compiled in 654ms) confirmed untouched.
+
