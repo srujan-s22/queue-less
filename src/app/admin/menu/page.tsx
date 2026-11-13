@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { menuService } from '@/services/menuService';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { DietaryBadge } from '@/components/ui/Badge';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/lib/socket/useSocket';
 import {
   Plus,
   Search,
@@ -37,9 +38,21 @@ export default function AdminMenuManagementPage() {
 
   const { showToast } = useToast();
 
-  const loadItems = () => {
-    setItems(menuService.getAll());
-  };
+  const loadItems = useCallback(async () => {
+    try {
+      const live = await menuService.fetchMenuItems();
+      if (live && live.length > 0) setItems(live);
+    } catch {
+      setItems(menuService.getAll());
+    }
+  }, []);
+
+  useEffect(() => {
+    loadItems();
+  }, [loadItems]);
+
+  useSocket('menu:updated', () => { loadItems(); });
+  useSocket('inventory:updated', () => { loadItems(); });
 
   const handleOpenAddModal = () => {
     setEditingItem(null);
@@ -65,38 +78,54 @@ export default function AdminMenuManagementPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveItem = (e: React.FormEvent) => {
+  const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    menuService.saveItem({
-      id: editingItem ? editingItem.id : undefined,
-      name,
-      description,
-      price: Number(price),
-      category,
-      dietary,
-      prepTimeMinutes: Number(prepTimeMinutes),
-      imageUrl: imageUrl || undefined,
-      isAvailable: editingItem ? editingItem.isAvailable : true,
-    });
+    try {
+      await menuService.saveItem({
+        id: editingItem ? editingItem.id : undefined,
+        name,
+        description,
+        price: Number(price),
+        category,
+        dietary,
+        prepTimeMinutes: Number(prepTimeMinutes),
+        imageUrl: imageUrl || undefined,
+        isAvailable: editingItem ? editingItem.isAvailable : true,
+      });
 
-    loadItems();
-    setIsModalOpen(false);
-    showToast({
-      type: 'success',
-      title: editingItem ? 'Dish Updated' : 'New Dish Added',
-      message: `${name} has been updated in the campus catalog.`,
-    });
+      await loadItems();
+      setIsModalOpen(false);
+      showToast({
+        type: 'success',
+        title: editingItem ? 'Dish Updated' : 'New Dish Added',
+        message: `${name} has been updated in the campus catalog.`,
+      });
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Save Failed',
+        message: err.message || 'Unable to save menu item',
+      });
+    }
   };
 
-  const handleDelete = (id: string) => {
-    menuService.deleteItem(id);
-    loadItems();
-    setDeletingId(null);
-    showToast({
-      type: 'info',
-      title: 'Dish Deleted',
-      message: 'Item removed from canteen catalog.',
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      await menuService.deleteItem(id);
+      await loadItems();
+      setDeletingId(null);
+      showToast({
+        type: 'info',
+        title: 'Dish Deleted',
+        message: 'Item removed from canteen catalog.',
+      });
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: err.message || 'Unable to delete menu item',
+      });
+    }
   };
 
   const filteredItems = items.filter((item) => {

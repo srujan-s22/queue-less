@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { StudentLayout } from '@/components/layout/StudentLayout';
 import { menuService } from '@/services/menuService';
-import { Category, DietaryType } from '@/types';
+import { MenuItem, Category, DietaryType } from '@/types';
 import { FoodCard } from '@/components/student/FoodCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useSocket } from '@/lib/socket/useSocket';
 import { Search, Filter, Utensils } from 'lucide-react';
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'prep-time' | 'rating';
@@ -24,8 +25,30 @@ export default function StudentMenuPage() {
   const [dietaryFilter, setDietaryFilter] = useState<DietaryType | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'prep-time' | 'rating'>('featured');
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(() => menuService.getAll());
+  const [isLoading, setIsLoading] = useState(false);
 
-  const menuItems = menuService.getAll();
+  const refreshMenu = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const items = await menuService.fetchMenuItems();
+      if (items && items.length > 0) {
+        setMenuItems(items);
+      }
+    } catch {
+      // Retain current items
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshMenu();
+  }, [refreshMenu]);
+
+  // Real-time synchronization
+  useSocket('inventory:updated', () => { refreshMenu(); });
+  useSocket('menu:updated', () => { refreshMenu(); });
 
   const filteredItems = useMemo(() => {
     return menuItems.filter((item) => {
@@ -156,7 +179,18 @@ export default function StudentMenuPage() {
         </div>
 
         {/* Menu Items Grid */}
-        {filteredItems.length > 0 ? (
+        {isLoading && filteredItems.length === 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <div key={n} className="bg-white rounded-2xl border border-[#E5E7EB] p-4 space-y-4 animate-pulse">
+                <div className="h-44 bg-[#EDEDEB] rounded-xl" />
+                <div className="h-4 bg-[#EDEDEB] rounded w-3/4" />
+                <div className="h-3 bg-[#EDEDEB] rounded w-1/2" />
+                <div className="h-8 bg-[#EDEDEB] rounded-xl" />
+              </div>
+            ))}
+          </div>
+        ) : filteredItems.length > 0 ? (
           <div>
             <div className="flex items-center justify-between text-xs text-[#737373] mb-3">
               <span>Showing {filteredItems.length} dishes</span>

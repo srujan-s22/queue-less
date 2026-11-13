@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { orderService } from '@/services/orderService';
+import { staffApi } from '@/lib/api/services/staffApi';
+import { useSocket } from '@/lib/socket/useSocket';
 import {
   ChefHat,
   BellRing,
@@ -24,14 +26,61 @@ interface StaffLayoutProps {
 
 export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const router = useRouter();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dynamic order counts
-  const orders = orderService.getAll();
-  const incomingCount = orders.filter((o) => o.status === 'PLACED').length;
-  const preparingCount = orders.filter((o) => o.status === 'PREPARING' || o.status === 'ACCEPTED').length;
-  const readyCount = orders.filter((o) => o.status === 'READY_FOR_PICKUP').length;
+  const [counts, setCounts] = useState(() => {
+    const orders = orderService.getAll();
+    return {
+      incoming: orders.filter((o) => o.status === 'PLACED').length,
+      preparing: orders.filter((o) => o.status === 'PREPARING' || o.status === 'ACCEPTED').length,
+      ready: orders.filter((o) => o.status === 'READY_FOR_PICKUP').length,
+    };
+  });
+
+  const refreshCounts = useCallback(async () => {
+    try {
+      const dash = await staffApi.getDashboard();
+      if (dash) {
+        setCounts({
+          incoming: dash.incoming ?? 0,
+          preparing: dash.cooking ?? 0,
+          ready: dash.ready ?? 0,
+        });
+        return;
+      }
+    } catch {
+      // Fallback to local orderService cache
+      const orders = orderService.getAll();
+      setCounts({
+        incoming: orders.filter((o) => o.status === 'PLACED').length,
+        preparing: orders.filter((o) => o.status === 'PREPARING' || o.status === 'ACCEPTED').length,
+        ready: orders.filter((o) => o.status === 'READY_FOR_PICKUP').length,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshCounts();
+  }, [refreshCounts]);
+
+  // Real-time Socket.IO listeners
+  useSocket('order:created', () => { refreshCounts(); });
+  useSocket('order:status_updated', () => { refreshCounts(); });
+  useSocket('order:cancelled', () => { refreshCounts(); });
+
+  // Route protection
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || (user?.role !== 'staff' && user?.role !== 'admin'))) {
+      router.replace('/staff/login');
+    }
+  }, [isLoading, isAuthenticated, user, router]);
+
+  const incomingCount = counts.incoming;
+  const preparingCount = counts.preparing;
+  const readyCount = counts.ready;
 
   const staffNav = [
     { href: '/staff/dashboard', label: 'Command Center', icon: LayoutDashboard },
@@ -111,10 +160,10 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
         <div className="p-4 border-t border-[#262626] bg-[#141414] flex items-center justify-between">
           <div className="flex items-center gap-2.5 truncate">
             <div className="w-8 h-8 rounded-lg bg-[#252525] border border-[#383838] flex items-center justify-center text-white font-bold text-xs">
-              {user.name.charAt(0)}
+              {(user?.name || 'S').charAt(0)}
             </div>
             <div className="text-xs truncate">
-              <p className="font-semibold text-white truncate">{user.name}</p>
+              <p className="font-semibold text-white truncate">{user?.name || 'Staff'}</p>
               <p className="text-[10px] text-[#A3A3A3] truncate">Counter Operator</p>
             </div>
           </div>

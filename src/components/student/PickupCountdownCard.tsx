@@ -51,10 +51,10 @@ export const PickupCountdownCard: React.FC<PickupCountdownCardProps> = ({
   });
 
   // Simulator actions for testing
-  const handleSimulateOverdue = () => {
+  const handleSimulateOverdue = async () => {
     // Set deadline 5 minutes in the past
     const overdueDeadline = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-    const updated = orderService.updateStatus(order.id, 'READY_FOR_PICKUP');
+    const updated = await orderService.updateStatus(order.id, 'READY_FOR_PICKUP');
     if (updated) {
       updated.pickupDeadline = overdueDeadline;
       orderService.saveOrder(updated);
@@ -63,10 +63,10 @@ export const PickupCountdownCard: React.FC<PickupCountdownCardProps> = ({
     }
   };
 
-  const handleSimulateUrgent = () => {
+  const handleSimulateUrgent = async () => {
     // Set deadline 2 minutes in the future
     const urgentDeadline = new Date(Date.now() + 2 * 60 * 1000).toISOString();
-    const updated = orderService.updateStatus(order.id, 'READY_FOR_PICKUP');
+    const updated = await orderService.updateStatus(order.id, 'READY_FOR_PICKUP');
     if (updated) {
       updated.pickupDeadline = urgentDeadline;
       updated.lateFeeApplied = 0;
@@ -75,9 +75,9 @@ export const PickupCountdownCard: React.FC<PickupCountdownCardProps> = ({
     }
   };
 
-  const handleResetDeadline = () => {
+  const handleResetDeadline = async () => {
     const freshDeadline = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-    const updated = orderService.updateStatus(order.id, 'READY_FOR_PICKUP');
+    const updated = await orderService.updateStatus(order.id, 'READY_FOR_PICKUP');
     if (updated) {
       updated.pickupDeadline = freshDeadline;
       updated.lateFeeApplied = 0;

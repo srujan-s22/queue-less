@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { StudentLayout } from '@/components/layout/StudentLayout';
 import { menuService } from '@/services/menuService';
+import { MenuItem } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { DietaryBadge } from '@/components/ui/Badge';
@@ -27,11 +28,36 @@ export default function FoodItemDetailsPage() {
   const { showToast } = useToast();
 
   const itemId = typeof params.id === 'string' ? params.id : '';
-  const item = menuService.getById(itemId);
+  const [item, setItem] = useState<MenuItem | null>(() => menuService.getById(itemId) || null);
+  const [isLoading, setIsLoading] = useState(!item);
 
   const [quantity, setQuantity] = useState(1);
   const [spiceLevel, setSpiceLevel] = useState<'Mild' | 'Medium' | 'Spicy'>('Medium');
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    menuService.fetchMenuItemById(itemId).then((fetched) => {
+      if (mounted) {
+        if (fetched) setItem(fetched);
+        setIsLoading(false);
+      }
+    }).catch(() => {
+      if (mounted) setIsLoading(false);
+    });
+    return () => { mounted = false; };
+  }, [itemId]);
+
+  if (isLoading) {
+    return (
+      <StudentLayout>
+        <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
+          <div className="h-4 bg-[#EDEDEB] rounded w-24" />
+          <div className="bg-white rounded-2xl border border-[#E5E7EB] h-96" />
+        </div>
+      </StudentLayout>
+    );
+  }
 
   if (!item) {
     return (

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { StudentLayout } from '@/components/layout/StudentLayout';
 import { orderService } from '@/services/orderService';
+import { Order } from '@/types';
 import { Button } from '@/components/ui/Button';
 import confetti from 'canvas-confetti';
 import {
@@ -17,7 +18,17 @@ import {
 export default function OrderConfirmationPage() {
   const params = useParams();
   const orderId = typeof params.id === 'string' ? params.id : '';
-  const order = orderService.getById(orderId);
+  const [order, setOrder] = useState<Order | null>(() => orderService.getById(orderId) || null);
+  const [isLoading, setIsLoading] = useState(!order);
+
+  useEffect(() => {
+    orderService.fetchOrderById(orderId).then((fetched) => {
+      if (fetched) setOrder(fetched);
+      setIsLoading(false);
+    }).catch(() => {
+      setIsLoading(false);
+    });
+  }, [orderId]);
 
   useEffect(() => {
     // Fire celebratory confetti
@@ -32,6 +43,18 @@ export default function OrderConfirmationPage() {
       // safe fallback
     }
   }, []);
+
+  if (isLoading) {
+    return (
+      <StudentLayout>
+        <div className="max-w-2xl mx-auto space-y-6 animate-pulse py-12">
+          <div className="w-14 h-14 rounded-2xl bg-[#EDEDEB] mx-auto" />
+          <div className="h-6 bg-[#EDEDEB] rounded w-48 mx-auto" />
+          <div className="bg-white rounded-2xl border border-[#E5E7EB] h-72" />
+        </div>
+      </StudentLayout>
+    );
+  }
 
   if (!order) {
     return (

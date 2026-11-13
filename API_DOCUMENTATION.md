@@ -400,3 +400,49 @@ curl -X POST http://localhost:5000/api/v1/orders \
     "items": [{"menuItemId": "<ITEM_ID>", "quantity": 1}]
   }'
 ```
+
+---
+
+## 6. Real-Time Socket.IO Gateway Specification
+
+QueueLess incorporates a high-throughput Socket.IO event gateway running concurrently on the Express HTTP server (port 5000).
+
+### 6.1 Handshake Authentication & Scoping
+- **Endpoint:** `http://localhost:5000/socket.io`
+- **Transport:** WebSocket with polling fallback
+- **Auth:** Extracted automatically from HTTP-only `token` cookie or `auth.token` handshake parameter.
+- **Client Connection Options:**
+```typescript
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:5000', {
+  withCredentials: true,
+  transports: ['websocket', 'polling'],
+});
+```
+
+### 6.2 Connection Rooms
+Upon authentication, the server automatically joins the socket to appropriate rooms:
+- `student:${user._id}`: Private room for user-specific order updates.
+- `staff`: Kitchen staff room for real-time ticket arrival and cancellation.
+- `admin`: Operational oversight room.
+- `order:${orderId}`: Joined on-demand when client emits `join:order` (for granular tracking).
+
+### 6.3 Event Catalog
+| Event | Trigger / Source | Target Room | Payload Summary |
+| :--- | :--- | :--- | :--- |
+| `order:created` | Student submits order | `staff`, `admin` | Full sanitized Order document |
+| `order:status_updated` | Order status changes | `student:${id}`, `staff`, `admin`, `order:${orderId}` | `{ orderId, orderNumber, tokenNumber, status, studentId, ... }` |
+| `order:accepted` | Staff accepts ticket | `student:${id}`, `order:${orderId}` | Full Order document |
+| `order:preparing` | Kitchen starts cooking | `student:${id}`, `order:${orderId}` | Full Order document |
+| `order:ready` | Kitchen marks ready | `student:${id}`, `order:${orderId}` | Full Order document with `readyAt` & `pickupDeadline` |
+| `order:picked-up` | Counter confirms handover | `student:${id}`, `order:${orderId}` | Full Order document with `collectedAt` |
+| `order:cancelled` | Student cancels placed ticket | `staff`, `admin`, `order:${orderId}` | `{ orderId, status: 'CANCELLED', reason }` |
+| `order:rejected` | Kitchen rejects ticket | `student:${id}`, `order:${orderId}` | `{ orderId, status: 'REJECTED', reason }` |
+| `inventory:updated` | Staff toggles Item 86 | All clients | `{ menuItemId, name, isAvailable }` |
+| `menu:updated` | Admin creates/edits dish | All clients | Full MenuItem document |
+| `settings:updated` | Admin updates canteen policy | All clients | Full CanteenConfig document |
+
+> [!NOTE]
+> All Socket.IO events are emitted **strictly after** successful MongoDB database persistence. Zero transient or uncommitted states are dispatched.
+

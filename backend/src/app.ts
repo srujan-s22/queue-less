@@ -19,11 +19,11 @@ export const createApp = (): Application => {
   );
 
   // 2. CORS Configuration
-  const allowedOrigins = [
-    env.CLIENT_URL,
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-  ];
+  const configuredOrigins = env.CLIENT_URL
+    ? env.CLIENT_URL.split(',').map((u) => u.trim())
+    : [];
+  const defaultDevOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+  const allowedOrigins = Array.from(new Set([...configuredOrigins, ...defaultDevOrigins]));
 
   app.use(
     cors({
@@ -32,7 +32,10 @@ export const createApp = (): Application => {
         if (!origin || allowedOrigins.includes(origin)) {
           return callback(null, true);
         }
-        return callback(null, true); // Permissive in dev, controlled in prod
+        if (env.IS_PRODUCTION) {
+          return callback(new Error(`Origin '${origin}' not allowed by CORS`));
+        }
+        return callback(null, true);
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

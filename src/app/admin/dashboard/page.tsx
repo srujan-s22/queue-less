@@ -1,12 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { orderService } from '@/services/orderService';
 import { menuService } from '@/services/menuService';
+import { adminApi } from '@/lib/api/services/adminApi';
 import { StatCard } from '@/components/ui/StatCard';
 import { OrderStatusBadge } from '@/components/ui/Badge';
+import { useSocket } from '@/lib/socket/useSocket';
 import {
   TrendingUp,
   DollarSign,
@@ -18,14 +20,62 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
-  const orders = orderService.getAll();
-  const menuItems = menuService.getAll();
+  const [orders, setOrders] = useState(() => orderService.getAll());
+  const [menuItems, setMenuItems] = useState(() => menuService.getAll());
+  const [metrics, setMetrics] = useState({
+    totalRevenue: 0,
+    totalOrders: 0,
+    completedOrders: 0,
+    pendingOrders: 0,
+    avgOrderValue: 0,
+  });
 
-  // Metrics
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
-  const completedOrders = orders.filter((o) => o.status === 'PICKED_UP').length;
-  const pendingOrders = orders.filter((o) => o.status !== 'PICKED_UP' && o.status !== 'CANCELLED' && o.status !== 'REJECTED').length;
-  const avgOrderValue = orders.length > 0 ? Math.round(totalRevenue / orders.length) : 0;
+  const loadAnalytics = useCallback(async () => {
+    try {
+      const [analyticsData, liveMenu] = await Promise.all([
+        adminApi.getAnalytics(),
+        menuService.fetchMenuItems(),
+      ]);
+
+      if (analyticsData && analyticsData.overview) {
+        setMetrics({
+          totalRevenue: analyticsData.overview.totalRevenue ?? 0,
+          totalOrders: analyticsData.overview.totalOrders ?? 0,
+          completedOrders: analyticsData.statusBreakdown?.PICKED_UP ?? 0,
+          pendingOrders: Math.max(0, (analyticsData.overview.totalOrders ?? 0) - (analyticsData.statusBreakdown?.PICKED_UP ?? 0) - (analyticsData.statusBreakdown?.CANCELLED ?? 0) - (analyticsData.statusBreakdown?.REJECTED ?? 0)),
+          avgOrderValue: analyticsData.overview.averageOrderValue ?? 0,
+        });
+      }
+
+      if (liveMenu && liveMenu.length > 0) {
+        setMenuItems(liveMenu);
+      }
+
+      setOrders(orderService.getAll());
+    } catch {
+      const currentOrders = orderService.getAll();
+      const currentRev = currentOrders.reduce((sum, o) => sum + o.total, 0);
+      const currentComp = currentOrders.filter((o) => o.status === 'PICKED_UP').length;
+      const currentPend = currentOrders.filter((o) => o.status !== 'PICKED_UP' && o.status !== 'CANCELLED' && o.status !== 'REJECTED').length;
+      setMetrics({
+        totalRevenue: currentRev,
+        totalOrders: currentOrders.length,
+        completedOrders: currentComp,
+        pendingOrders: currentPend,
+        avgOrderValue: currentOrders.length > 0 ? Math.round(currentRev / currentOrders.length) : 0,
+      });
+      setOrders(currentOrders);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics]);
+
+  useSocket('order:created', () => { loadAnalytics(); });
+  useSocket('order:status_updated', () => { loadAnalytics(); });
+
+  const { totalRevenue, totalOrders, completedOrders, pendingOrders, avgOrderValue } = metrics;
 
   // Hourly order distribution simulation
   const hourlyData = [
@@ -71,7 +121,7 @@ export default function AdminDashboardPage() {
           />
           <StatCard
             label="Total Orders"
-            value={orders.length}
+            value={totalOrders}
             subValue={`${completedOrders} fulfilled today`}
             icon={<ShoppingBag className="w-5 h-5 text-[#252525]" />}
           />

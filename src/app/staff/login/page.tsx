@@ -17,19 +17,27 @@ export default function StaffLoginPage() {
   const [pin, setPin] = useState('4421');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      login('staff', 'ramesh.canteen@campus.edu');
+    try {
+      await login('staff', 'ramesh.canteen@campus.edu', 'staff123');
       showToast({
         type: 'success',
         title: 'Staff Login Successful',
-        message: 'Welcome back, Ramesh Patel (Counter #2 Express)',
+        message: 'Welcome back, Ramesh Patel (Central Canteen Operations)',
       });
       router.push('/staff/dashboard');
-    }, 400);
+    } catch (error: any) {
+      showToast({
+        type: 'error',
+        title: 'Staff Login Failed',
+        message: error.message || 'Invalid staff credentials',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

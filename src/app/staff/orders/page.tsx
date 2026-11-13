@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StaffLayout } from '@/components/layout/StaffLayout';
 import { orderService } from '@/services/orderService';
+import { staffApi } from '@/lib/api/services/staffApi';
 import { Order } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/lib/socket/useSocket';
 import {
   BellRing,
   Check,
@@ -17,25 +19,39 @@ import {
 } from 'lucide-react';
 
 export default function StaffIncomingOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    return orderService.getAll().filter((o) => o.status === 'PLACED');
+  });
   const [rejectingOrder, setRejectingOrder] = useState<Order | null>(null);
   const [rejectReason, setRejectReason] = useState('Kitchen at peak rush capacity');
   const { showToast } = useToast();
 
-  const loadOrders = () => {
-    const all = orderService.getAll();
-    setOrders(all.filter((o) => o.status === 'PLACED'));
-  };
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      loadOrders();
-    });
+  const loadOrders = useCallback(async () => {
+    try {
+      const incoming = await staffApi.getIncoming();
+      if (incoming && Array.isArray(incoming)) {
+        setOrders(incoming);
+        return;
+      }
+      const all = orderService.getAll();
+      setOrders(all.filter((o) => o.status === 'PLACED'));
+    } catch {
+      const all = orderService.getAll();
+      setOrders(all.filter((o) => o.status === 'PLACED'));
+    }
   }, []);
 
-  const handleAccept = (orderId: string) => {
-    orderService.updateStatus(orderId, 'ACCEPTED');
+  useEffect(() => {
     loadOrders();
+  }, [loadOrders]);
+
+  useSocket('order:created', () => { loadOrders(); });
+  useSocket('order:status_updated', () => { loadOrders(); });
+  useSocket('order:cancelled', () => { loadOrders(); });
+
+  const handleAccept = async (orderId: string) => {
+    await orderService.updateStatus(orderId, 'ACCEPTED');
+    await loadOrders();
     showToast({
       type: 'success',
       title: 'Order Accepted',
@@ -43,16 +59,16 @@ export default function StaffIncomingOrdersPage() {
     });
   };
 
-  const handleConfirmReject = () => {
+  const handleConfirmReject = async () => {
     if (!rejectingOrder) return;
-    orderService.updateStatus(rejectingOrder.id, 'REJECTED', rejectReason);
+    await orderService.updateStatus(rejectingOrder.id, 'REJECTED', rejectReason);
     showToast({
       type: 'warning',
       title: 'Order Rejected',
       message: `Order #${rejectingOrder.id} was rejected with reason: ${rejectReason}`,
     });
     setRejectingOrder(null);
-    loadOrders();
+    await loadOrders();
   };
 
   return (

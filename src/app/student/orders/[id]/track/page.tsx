@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { StudentLayout } from '@/components/layout/StudentLayout';
@@ -11,6 +11,7 @@ import { PickupCountdownCard } from '@/components/student/PickupCountdownCard';
 import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
+import { useOrderSocket } from '@/lib/socket/useSocket';
 import {
   ChevronLeft,
   FastForward,
@@ -22,14 +23,51 @@ export default function OrderTrackingPage() {
   const { showToast } = useToast();
   const orderId = typeof params.id === 'string' ? params.id : '';
 
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<Order | null>(() => orderService.getById(orderId) || null);
+  const [isLoading, setIsLoading] = useState(!order);
+
+  const refreshOrder = useCallback(async () => {
+    try {
+      const live = await orderService.fetchOrderById(orderId);
+      if (live) setOrder({ ...live });
+    } catch {
+      // keep existing
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orderId]);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      const found = orderService.getById(orderId);
-      if (found) setOrder({ ...found });
-    });
-  }, [orderId]);
+    refreshOrder();
+  }, [refreshOrder]);
+
+  // Real-time Socket.IO subscription for this order
+  useOrderSocket(order?.id || orderId, (data) => {
+    if (data && (data.id === orderId || data._id === orderId)) {
+      setOrder((prev) => {
+        if (prev?.status !== data.status) {
+          showToast({
+            type: data.status === 'READY_FOR_PICKUP' ? 'success' : 'info',
+            title: `Order Status: ${data.status.replace('_', ' ')}`,
+            message: `Ticket #${data.tokenNumber || data.id} is now ${data.status}`,
+          });
+        }
+        return { ...data };
+      });
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <StudentLayout>
+        <div className="max-w-3xl mx-auto space-y-6 animate-pulse py-8">
+          <div className="h-4 bg-[#EDEDEB] rounded w-32" />
+          <div className="bg-white rounded-2xl border border-[#E5E7EB] h-64" />
+          <div className="bg-white rounded-2xl border border-[#E5E7EB] h-48" />
+        </div>
+      </StudentLayout>
+    );
+  }
 
   if (!order) {
     return (
@@ -46,7 +84,7 @@ export default function OrderTrackingPage() {
   }
 
   // Advance lifecycle simulation helper
-  const handleAdvanceStatus = () => {
+  const handleAdvanceStatus = async () => {
     const cycle: OrderStatus[] = [
       'PLACED',
       'ACCEPTED',
@@ -57,7 +95,7 @@ export default function OrderTrackingPage() {
     const currentIndex = cycle.indexOf(order.status);
     if (currentIndex < cycle.length - 1) {
       const nextStatus = cycle[currentIndex + 1];
-      const updated = orderService.updateStatus(order.id, nextStatus);
+      const updated = await orderService.updateStatus(order.id, nextStatus);
       if (updated) {
         setOrder({ ...updated });
         showToast({
@@ -68,7 +106,7 @@ export default function OrderTrackingPage() {
       }
     } else {
       // Loop back to PLACED for demo
-      const updated = orderService.updateStatus(order.id, 'PLACED');
+      const updated = await orderService.updateStatus(order.id, 'PLACED');
       if (updated) {
         setOrder({ ...updated });
         showToast({

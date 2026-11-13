@@ -10,7 +10,7 @@ import { UtensilsCrossed, ArrowRight } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { login, updateUser } = useAuth();
+  const { registerStudent } = useAuth();
   const { showToast } = useToast();
 
   const [name, setName] = useState('');
@@ -21,15 +21,16 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      login('student', email);
-      updateUser({
+    try {
+      await registerStudent({
         name,
-        rollNumber,
+        email,
+        password,
+        studentId: rollNumber,
         department,
         phone,
       });
@@ -37,11 +38,19 @@ export default function RegisterPage() {
       showToast({
         type: 'success',
         title: 'Account Registered Successfully',
-        message: `Welcome to QueueLess, ${name}! Your wallet is credited with ₹450 demo credit.`,
+        message: `Welcome to QueueLess, ${name}!`,
       });
 
       router.push('/student/dashboard');
-    }, 450);
+    } catch (error: any) {
+      showToast({
+        type: 'error',
+        title: 'Registration Failed',
+        message: error.message || 'Could not complete registration. Please check inputs.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

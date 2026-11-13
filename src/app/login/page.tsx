@@ -15,7 +15,7 @@ export default function LoginPage() {
   const { showToast } = useToast();
 
   const [email, setEmail] = useState('aarav.sharma@campus.edu');
-  const [password, setPassword] = useState('Campus@2026');
+  const [password, setPassword] = useState('student123');
   const [selectedRole, setSelectedRole] = useState<Role>('student');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -23,19 +23,22 @@ export default function LoginPage() {
     setSelectedRole(role);
     if (role === 'student') {
       setEmail('aarav.sharma@campus.edu');
+      setPassword('student123');
     } else if (role === 'staff') {
       setEmail('ramesh.canteen@campus.edu');
+      setPassword('staff123');
     } else {
       setEmail('ananya.iyer@campus.edu');
+      setPassword('admin123');
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      login(selectedRole, email);
+    try {
+      await login(selectedRole, email, password);
       showToast({
         type: 'success',
         title: `Logged in as ${selectedRole.toUpperCase()}`,
@@ -45,7 +48,15 @@ export default function LoginPage() {
       if (selectedRole === 'student') router.push('/student/dashboard');
       else if (selectedRole === 'staff') router.push('/staff/dashboard');
       else router.push('/admin/dashboard');
-    }, 400);
+    } catch (error: any) {
+      showToast({
+        type: 'error',
+        title: 'Login Failed',
+        message: error.message || 'Invalid email or password.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -1,5 +1,6 @@
 import { MenuItem, IMenuItem } from '../models';
 import { NotFoundError } from '../utils/errors';
+import { socketEmitter } from '../socket/emitter';
 
 export interface MenuFilterOptions {
   category?: string;
@@ -48,6 +49,7 @@ export const createMenuItem = async (data: Partial<IMenuItem>) => {
     ...data,
     isArchived: false,
   });
+  socketEmitter.emitMenuUpdated(newItem);
   return newItem;
 };
 
@@ -60,6 +62,7 @@ export const updateMenuItem = async (id: string, updates: Partial<IMenuItem>) =>
   if (!updatedItem) {
     throw new NotFoundError('Menu item not found.');
   }
+  socketEmitter.emitMenuUpdated(updatedItem);
   return updatedItem;
 };
 
@@ -72,6 +75,7 @@ export const toggleItemAvailability = async (id: string, isAvailable: boolean) =
   if (!updatedItem) {
     throw new NotFoundError('Menu item not found.');
   }
+  socketEmitter.emitInventoryUpdated(updatedItem);
   return updatedItem;
 };
 
@@ -84,5 +88,6 @@ export const archiveMenuItem = async (id: string) => {
   if (!archived) {
     throw new NotFoundError('Menu item not found.');
   }
+  socketEmitter.emitMenuUpdated({ _id: id, isArchived: true });
   return { message: 'Menu item archived successfully' };
 };

@@ -45,8 +45,8 @@ export default function StaffOrderDetailsPage() {
     );
   }
 
-  const handleStatusUpdate = (newStatus: OrderStatus) => {
-    const updated = orderService.updateStatus(order.id, newStatus);
+  const handleStatusUpdate = async (newStatus: OrderStatus) => {
+    const updated = await orderService.updateStatus(order.id, newStatus);
     if (updated) {
       setOrder({ ...updated });
       showToast({

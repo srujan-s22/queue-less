@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { StaffLayout } from '@/components/layout/StaffLayout';
 import { menuService } from '@/services/menuService';
 import { MenuItem, Category } from '@/types';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/lib/socket/useSocket';
 import { DietaryBadge } from '@/components/ui/Badge';
 import { Search, Check, X } from 'lucide-react';
 
@@ -15,9 +16,27 @@ export default function StaffMenuManagementPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
   const { showToast } = useToast();
 
-  const handleToggle = (id: string, name: string, currentStatus: boolean) => {
-    menuService.toggleAvailability(id);
-    setItems(menuService.getAll());
+  const loadMenu = useCallback(async () => {
+    try {
+      const liveItems = await menuService.fetchMenuItems();
+      if (liveItems && liveItems.length > 0) {
+        setItems(liveItems);
+      }
+    } catch {
+      setItems(menuService.getAll());
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMenu();
+  }, [loadMenu]);
+
+  useSocket('inventory:updated', () => { loadMenu(); });
+  useSocket('menu:updated', () => { loadMenu(); });
+
+  const handleToggle = async (id: string, name: string, currentStatus: boolean) => {
+    await menuService.toggleAvailability(id);
+    await loadMenu();
     showToast({
       type: currentStatus ? 'warning' : 'success',
       title: currentStatus ? `${name} Marked Sold Out (86'd)` : `${name} Restocked Live`,

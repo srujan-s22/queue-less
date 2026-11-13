@@ -7,6 +7,7 @@ import {
   ICanteenSettings,
 } from '../models';
 import { formatToIST } from '../utils/timezone';
+import { socketEmitter } from '../socket/emitter';
 
 export interface AdminOrderQuery {
   page?: number;
@@ -104,6 +105,8 @@ export const updateCanteenSettings = async (
     metadata: updates,
     timestamp: new Date(),
   });
+
+  socketEmitter.emitSettingsUpdated(settings);
 
   return settings;
 };

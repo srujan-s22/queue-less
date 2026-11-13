@@ -1,6 +1,7 @@
-import { MenuItem, Category } from '@/types';
+import { MenuItem, Category, DietaryType } from '@/types';
 import { INITIAL_MENU_ITEMS } from '@/data/mockData';
 import { storage } from './storage';
+import { menuApi, MenuFilterParams } from '@/lib/api/services/menuApi';
 
 const MENU_STORAGE_KEY = 'menu_items';
 
@@ -20,60 +21,145 @@ export const menuService = {
     return items.filter((item) => item.category === category);
   },
 
-  toggleAvailability(id: string): MenuItem | null {
+  async fetchMenuItems(filters: MenuFilterParams = {}): Promise<MenuItem[]> {
+    try {
+      const items = await menuApi.getMenu(filters);
+      if (items && items.length > 0) {
+        storage.set(MENU_STORAGE_KEY, items);
+        return items;
+      }
+      return this.getAll();
+    } catch (err) {
+      console.warn('[menuService] Failed to fetch menu from API, using cached:', err);
+      return this.getAll();
+    }
+  },
+
+  async fetchMenuItemById(id: string): Promise<MenuItem | undefined> {
+    try {
+      const item = await menuApi.getMenuItem(id);
+      if (item) {
+        const items = this.getAll();
+        const index = items.findIndex((i) => i.id === item.id);
+        if (index > -1) {
+          items[index] = item;
+        } else {
+          items.push(item);
+        }
+        storage.set(MENU_STORAGE_KEY, items);
+        return item;
+      }
+      return this.getById(id);
+    } catch {
+      return this.getById(id);
+    }
+  },
+
+  async toggleAvailability(id: string): Promise<MenuItem | null> {
     const items = this.getAll();
     const index = items.findIndex((item) => item.id === id);
     if (index === -1) return null;
 
-    items[index] = {
-      ...items[index],
-      isAvailable: !items[index].isAvailable,
-    };
+    const newAvailability = !items[index].isAvailable;
+
+    // Optimistic update
+    items[index] = { ...items[index], isAvailable: newAvailability };
     storage.set(MENU_STORAGE_KEY, items);
-    return items[index];
+
+    try {
+      const updated = await menuApi.toggleAvailability(id, newAvailability);
+      items[index] = updated;
+      storage.set(MENU_STORAGE_KEY, items);
+      return updated;
+    } catch (err) {
+      console.warn('[menuService] Toggle availability API call failed:', err);
+      return items[index];
+    }
   },
 
-  saveItem(item: Partial<MenuItem> & { name: string; price: number; category: Category }): MenuItem {
+  async saveItem(item: Partial<MenuItem> & { name: string; price: number; category: Category }): Promise<MenuItem> {
     const items = this.getAll();
-    if (item.id) {
-      // Edit existing
-      const index = items.findIndex((i) => i.id === item.id);
-      if (index !== -1) {
-        items[index] = { ...items[index], ...item } as MenuItem;
+
+    if (item.id && !item.id.startsWith('menu_')) {
+      // Edit existing backend dish
+      try {
+        const updated = await menuApi.updateItem(item.id, {
+          name: item.name,
+          description: item.description,
+          category: item.category,
+          price: Number(item.price),
+          dietary: item.dietary,
+          prepTimeMinutes: item.prepTimeMinutes,
+          imageUrl: item.imageUrl,
+          isAvailable: item.isAvailable,
+          calories: item.calories,
+        });
+
+        const index = items.findIndex((i) => i.id === item.id);
+        if (index !== -1) {
+          items[index] = updated;
+        } else {
+          items.unshift(updated);
+        }
         storage.set(MENU_STORAGE_KEY, items);
-        return items[index];
+        return updated;
+      } catch (err) {
+        console.warn('[menuService] Update item API failed, saving locally:', err);
       }
     }
 
-    // Create new
-    const newItem: MenuItem = {
-      id: `menu_${Date.now()}`,
-      name: item.name,
-      description: item.description || '',
-      price: Number(item.price),
-      category: item.category,
-      dietary: item.dietary || 'veg',
-      isAvailable: item.isAvailable ?? true,
-      prepTimeMinutes: Number(item.prepTimeMinutes) || 8,
-      imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
-      rating: 4.8,
-      reviewCount: 1,
-      calories: Number(item.calories) || 300,
-    };
+    // Create new dish via API
+    try {
+      const created = await menuApi.createItem({
+        name: item.name,
+        description: item.description || '',
+        category: item.category,
+        price: Number(item.price),
+        dietary: item.dietary || 'veg',
+        prepTimeMinutes: Number(item.prepTimeMinutes) || 8,
+        imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+        isAvailable: item.isAvailable ?? true,
+        calories: Number(item.calories) || 300,
+        allergens: item.allergens || [],
+      });
 
-    items.unshift(newItem);
-    storage.set(MENU_STORAGE_KEY, items);
-    return newItem;
+      items.unshift(created);
+      storage.set(MENU_STORAGE_KEY, items);
+      return created;
+    } catch (err) {
+      console.warn('[menuService] Create item API failed, saving locally:', err);
+      const fallbackItem: MenuItem = {
+        id: item.id || `menu_${Date.now()}`,
+        name: item.name,
+        description: item.description || '',
+        price: Number(item.price),
+        category: item.category,
+        dietary: item.dietary || 'veg',
+        isAvailable: item.isAvailable ?? true,
+        prepTimeMinutes: Number(item.prepTimeMinutes) || 8,
+        imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+        rating: 4.8,
+        reviewCount: 1,
+        calories: Number(item.calories) || 300,
+      };
+      items.unshift(fallbackItem);
+      storage.set(MENU_STORAGE_KEY, items);
+      return fallbackItem;
+    }
   },
 
-  deleteItem(id: string): boolean {
+  async deleteItem(id: string): Promise<boolean> {
     const items = this.getAll();
     const filtered = items.filter((item) => item.id !== id);
-    if (filtered.length !== items.length) {
-      storage.set(MENU_STORAGE_KEY, filtered);
+    storage.set(MENU_STORAGE_KEY, filtered);
+
+    try {
+      await menuApi.removeItem(id);
+      return true;
+    } catch (err) {
+      console.warn('[menuService] Delete item API failed, removed locally:', err);
       return true;
     }
-    return false;
   },
 
   resetDefaults(): void {

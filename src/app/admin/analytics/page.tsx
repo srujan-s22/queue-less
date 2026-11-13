@@ -1,11 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { orderService } from '@/services/orderService';
+import { adminApi } from '@/lib/api/services/adminApi';
 import { StatCard } from '@/components/ui/StatCard';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/lib/socket/useSocket';
 import {
   Download,
   TrendingUp,
@@ -17,32 +19,60 @@ import {
 
 export default function AdminAnalyticsPage() {
   const { showToast } = useToast();
-  const orders = orderService.getAll();
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+  const [orders, setOrders] = useState(() => orderService.getAll());
+  const [analytics, setAnalytics] = useState<any>(null);
 
-  const handleExportCSV = () => {
-    // Generate simulated CSV string
-    const headers = 'Order_ID,Token,Student,Roll_No,Items,Total_INR,Slot,Status,Date\n';
-    const rows = orders
-      .map(
-        (o) =>
-          `"${o.id}","${o.tokenNumber}","${o.studentName}","${o.studentRollNo}","${o.items.map((i) => `${i.menuItem.name}x${i.quantity}`).join(';')}",${o.total},"${o.pickupSlot.label}","${o.status}","${o.createdAt}"`
-      )
-      .join('\n');
+  const loadAnalytics = useCallback(async () => {
+    try {
+      const data = await adminApi.getAnalytics();
+      if (data) setAnalytics(data);
+      setOrders(orderService.getAll());
+    } catch {
+      setOrders(orderService.getAll());
+    }
+  }, []);
 
-    const blob = new Blob([headers + rows], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `QueueLess_Campus_Report_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics]);
 
-    showToast({
-      type: 'success',
-      title: 'Report Exported Successfully',
-      message: 'CSV file generated with all order tickets, revenues, and slot analytics.',
-    });
+  useSocket('order:created', () => { loadAnalytics(); });
+  useSocket('order:status_updated', () => { loadAnalytics(); });
+
+  const totalRevenue = analytics?.totalRevenue ?? orders.reduce((sum, o) => sum + o.total, 0);
+
+  const handleExportCSV = async () => {
+    try {
+      await adminApi.exportCsv();
+      showToast({
+        type: 'success',
+        title: 'Report Exported Successfully',
+        message: 'CSV file generated with all order tickets, revenues, and slot analytics.',
+      });
+    } catch (err) {
+      console.warn('Backend CSV export failed, falling back to client CSV:', err);
+      const headers = 'Order_ID,Token,Student,Roll_No,Items,Total_INR,Slot,Status,Date\n';
+      const rows = orders
+        .map(
+          (o) =>
+            `"${o.id}","${o.tokenNumber}","${o.studentName}","${o.studentRollNo}","${o.items.map((i) => `${i.menuItem.name}x${i.quantity}`).join(';')}",${o.total},"${o.pickupSlot.label}","${o.status}","${o.createdAt}"`
+        )
+        .join('\n');
+
+      const blob = new Blob([headers + rows], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `QueueLess_Campus_Report_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      showToast({
+        type: 'success',
+        title: 'Report Exported Successfully',
+        message: 'CSV file generated with all order tickets, revenues, and slot analytics.',
+      });
+    }
   };
 
   return (

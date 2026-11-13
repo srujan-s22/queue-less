@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { configService } from '@/services/configService';
@@ -24,10 +24,21 @@ interface StudentLayoutProps {
 
 export const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const { totalCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const config = configService.getConfig();
+  const [config, setConfig] = useState(() => configService.getConfig());
+
+  useEffect(() => {
+    configService.fetchConfig().then(setConfig).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   const navLinks = [
     { href: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -129,11 +140,11 @@ export const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
               className="flex items-center gap-2 p-1 pl-2 rounded-xl border border-[#E5E7EB] hover:border-[#D1D5DB] transition-colors"
             >
               <div className="flex flex-col text-right hidden sm:block">
-                <span className="text-xs font-semibold text-[#252525] leading-tight">{user.name}</span>
-                <span className="text-[10px] text-[#737373] font-mono leading-tight">{user.rollNumber}</span>
+                <span className="text-xs font-semibold text-[#252525] leading-tight">{user?.name || 'Student'}</span>
+                <span className="text-[10px] text-[#737373] font-mono leading-tight">{user?.rollNumber || ''}</span>
               </div>
               <div className="w-8 h-8 rounded-lg bg-[#252525] text-white flex items-center justify-center text-xs font-bold">
-                {user.name.charAt(0)}
+                {(user?.name || 'S').charAt(0)}
               </div>
             </Link>
 

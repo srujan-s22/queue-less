@@ -321,3 +321,64 @@ Client item prices, subtotals, and totals are never trusted. The order service q
 - **Production Builds:** `npm run build` succeeds cleanly for `backend/` and `worker/`.
 - **Frontend Regression Protection:** Next.js root `npm run lint` (0 errors), `npx tsc --noEmit` (0 errors), and `npm run build` (26/26 routes compiled in 654ms) confirmed untouched.
 
+---
+
+## 10. Phase 3: Complete Frontend-Backend Integration & Real-Time Sync
+
+### 1. Architectural Scope & Objectives
+Phase 3 unified the Next.js 16 frontend with the Express.js/MongoDB REST API backend and the standalone background worker. All mock-data dependencies were replaced with authentic database operations and bidirectional WebSocket synchronization (Socket.IO). The visual design, layouts, component structures, and enterprise monochrome styling established in Phase 1 and 1.1 were strictly preserved.
+
+### 2. Audit Findings Remediated
+1. **ORD-01 (Order Number Collision Prevention):** Implemented an entropy-backed collision-resistant order number generator (`QL-${baseSeq}-${entropy}`) in `backend/src/services/orderService.ts` with an automatic 5-attempt retry loop on MongoDB duplicate key errors (11000).
+2. **API-01 (Identifier Normalization):** Built a non-destructive entity adapter layer (`src/lib/api/adapters.ts`) normalizing MongoDB `_id: ObjectId` to `id: string` across Menu Items, Pickup Slots, Orders, Settings, and Users, guaranteeing complete backward compatibility with frontend components.
+3. **SEC-01 (Multi-Origin CORS):** Enhanced `backend/src/app.ts` to parse comma-separated `CLIENT_URL` environments and reject untrusted browser origins in production.
+
+### 3. Real-Time Engine (Socket.IO Gateway)
+- Implemented `backend/src/socket/index.ts` attaching Socket.IO (v4.8.1) to Express HTTP server with JWT cookie & handshake authentication.
+- Scoped room structure:
+  - `student:${userId}`: Receives student-specific order lifecycle transitions (`order:accepted`, `order:preparing`, `order:ready`, `order:picked-up`, `order:rejected`).
+  - `staff`: Receives kitchen command notifications (`order:created`, `order:status_updated`, `order:cancelled`).
+  - `admin`: Receives master ledger updates, menu catalog events (`menu:updated`), and settings modifications.
+  - `order:${orderId}`: Dedicated room for granular single-order tracking screens.
+- Post-Persistence Guarantee (`backend/src/socket/emitter.ts`): Socket events are dispatched **only after** successful Mongoose database commit, eliminating phantom state updates.
+- Frontend Client Singleton & Hooks (`src/lib/socket/`): Reconnecting socket singleton with `useSocket(eventName, callback)` and `useOrderSocket(orderId, callback)` hooks.
+
+### 4. Frontend API Client Architecture (`src/lib/api/`)
+- `client.ts`: Normalized fetch wrapper enforcing `credentials: 'include'` for dual HTTP-only cookie + Bearer token session authentication.
+- `endpoints.ts`: Centralized REST API route dictionary.
+- `services/`: Dedicated modules for `authApi`, `menuApi`, `ordersApi`, `slotsApi`, `staffApi`, `adminApi`, and `settingsApi`.
+- **Service Bridge (`src/services/`):** Refactored `orderService.ts`, `menuService.ts`, and `configService.ts` to delegate directly to backend API services while caching in `localStorage` for offline resilience.
+
+### 5. Portal Integrations Completed
+- **Authentication & Route Protection:**
+  - `src/context/AuthContext.tsx`: Authenticates against `/api/v1/auth/login`, `/api/v1/auth/me`, and `/api/v1/auth/logout`. Restores authentic session on application boot.
+  - Client-side route guards in `StudentLayout.tsx`, `StaffLayout.tsx`, and `AdminLayout.tsx` redirect unauthorized requests with zero visual flicker.
+- **Student Portal:**
+  - `dashboard/page.tsx`: Live order metrics and active orders fetched from MongoDB.
+  - `menu/page.tsx` & `[id]/page.tsx`: Dynamic dish catalog with real-time Item 86 sold-out badges and skeleton loading states.
+  - `checkout/page.tsx`: Capacity-metered pickup slots loaded live from `/api/v1/slots`. Atomic pre-order submission via `/api/v1/orders` with idempotency headers.
+  - `orders/[id]/track/page.tsx`: Real-time order tracking driven by `useOrderSocket()`. Countdown relies strictly on server `pickupDeadline` timestamps (persisting across page reloads without resetting).
+  - `orders/page.tsx`: Live order history with 1-click order cancellation releasing slot capacity.
+- **Kitchen Staff Command Center:**
+  - `dashboard/page.tsx`: Live incoming, cooking, and ready tallies dynamically refreshed via `staffApi.getDashboard()` and Socket.IO.
+  - `orders/page.tsx`: Live incoming tickets with 1-click Accept (`ACCEPTED`) and Reject with reason modals.
+  - `preparation/page.tsx`: Live kitchen preparation line with Start Cooking (`PREPARING`) and Mark Ready (`READY_FOR_PICKUP`).
+  - `ready/page.tsx`: Ready staging line with instant token filtering and Handover confirmation (`PICKED_UP`).
+  - `menu/page.tsx`: One-tap Item 86 toggle persisting directly to MongoDB and broadcasting real-time `inventory:updated` events.
+- **Administrator Console:**
+  - `dashboard/page.tsx` & `analytics/page.tsx`: Live KPI metrics (gross revenue, order throughput, AOV, hourly rush volume) loaded from `/api/v1/analytics/dashboard`.
+  - `menu/page.tsx`: Menu catalog CRUD with create, update, and soft-delete capabilities.
+  - `orders/page.tsx`: Master order registry with pagination, search, and status overrides.
+  - `settings/page.tsx`: Canteen operational hours, packaging fees, tax rates, and late fee configurations persisting to `canteen_settings`.
+  - CSV Export: Live order audit report generated and downloaded directly from backend `/api/v1/analytics/export-csv`.
+
+### 6. Verification & Test Results
+- **Multi-Role Integration Test:** Verified end-to-end lifecycle across Student pre-order -> Kitchen incoming ticket -> Accept -> Prepare -> Mark Ready (with deadline timestamps) -> Counter Handover -> Admin Analytics -> Item 86 Toggle (**100% Pass**).
+- **Backend Unit & Integration Tests:** 5 test suites, **27 passed, 27 total** (100% pass rate).
+- **Worker Unit & Integration Tests:** 1 test suite, **2 passed, 2 total** (100% pass rate).
+- **Frontend Next.js Build:** All 26 routes compiled successfully in 975ms with zero errors.
+- **Static Code Analysis:**
+  - `npx tsc --noEmit` (Root, Backend, Worker): **0 TypeScript errors across all 3 codebases**.
+  - `npm run lint` (Root): **0 errors**.
+
+

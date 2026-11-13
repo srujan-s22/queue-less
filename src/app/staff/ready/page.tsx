@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StaffLayout } from '@/components/layout/StaffLayout';
 import { orderService } from '@/services/orderService';
+import { staffApi } from '@/lib/api/services/staffApi';
 import { Order } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/lib/socket/useSocket';
 import {
   CheckCircle,
   Search,
@@ -15,26 +17,38 @@ import {
 } from 'lucide-react';
 
 export default function StaffReadyPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    return orderService.getAll().filter((o) => o.status === 'READY_FOR_PICKUP');
+  });
   const [searchToken, setSearchToken] = useState('');
   const { showToast } = useToast();
 
-  const loadOrders = () => {
-    const all = orderService.getAll();
-    setOrders(all.filter((o) => o.status === 'READY_FOR_PICKUP'));
-  };
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      loadOrders();
-    });
-    const interval = setInterval(loadOrders, 5000);
-    return () => clearInterval(interval);
+  const loadOrders = useCallback(async () => {
+    try {
+      const ready = await staffApi.getReady();
+      if (ready && Array.isArray(ready)) {
+        setOrders(ready);
+        return;
+      }
+      const all = orderService.getAll();
+      setOrders(all.filter((o) => o.status === 'READY_FOR_PICKUP'));
+    } catch {
+      const all = orderService.getAll();
+      setOrders(all.filter((o) => o.status === 'READY_FOR_PICKUP'));
+    }
   }, []);
 
-  const handleConfirmHandover = (orderId: string) => {
-    orderService.updateStatus(orderId, 'PICKED_UP');
+  useEffect(() => {
     loadOrders();
+  }, [loadOrders]);
+
+  useSocket('order:ready', () => { loadOrders(); });
+  useSocket('order:picked-up', () => { loadOrders(); });
+  useSocket('order:status_updated', () => { loadOrders(); });
+
+  const handleConfirmHandover = async (orderId: string) => {
+    await orderService.handoverOrder(orderId);
+    await loadOrders();
     showToast({
       type: 'success',
       title: 'Handover Confirmed',

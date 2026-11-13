@@ -10,6 +10,7 @@ import {
 } from '../models';
 import { atomicReserveSlot, atomicReleaseSlot } from './slotService';
 import { addMinutes } from '../utils/timezone';
+import { socketEmitter } from '../socket/emitter';
 import {
   BadRequestError,
   NotFoundError,
@@ -133,33 +134,53 @@ export const createOrder = async (
       paymentStatus = 'collected';
     }
 
-    // 6. Generate sequential / distinctive order numbers
+    // 6. Generate sequential / distinctive order numbers with collision retry
     const totalOrdersCount = await Order.countDocuments();
-    const orderNumber = `QL-${1000 + ((totalOrdersCount + 1) % 9000)}`;
-    const tokenNumber = `A-${((totalOrdersCount % 99) + 1).toString().padStart(2, '0')}`;
+    const baseSeq = 1000 + ((totalOrdersCount + 1) % 9000);
+    const counterLetter = ['A', 'B', 'C'][Math.floor(Math.random() * 3)];
+    const tokenNumber = `${counterLetter}-${Math.floor(10 + Math.random() * 90)}`;
 
-    // 7. Create Order document
-    const newOrder = await Order.create({
-      orderNumber,
-      tokenNumber,
-      student: user._id,
-      studentName: user.name,
-      studentRollNo: user.studentId || 'N/A',
-      studentPhone: user.phone || '',
-      items: orderItemsSnapshot,
-      subtotal,
-      tax,
-      packagingFee,
-      lateFeeApplied: 0,
-      total,
-      status: 'PLACED',
-      pickupSlot: reservedSlot._id,
-      pickupSlotLabel: reservedSlot.label,
-      counterId: 'COUNTER-01',
-      paymentMethod: dto.paymentMethod,
-      paymentStatus,
-      idempotencyKey: dto.idempotencyKey,
-    });
+    let newOrder: IOrder | null = null;
+    let attempts = 0;
+
+    while (!newOrder && attempts < 5) {
+      attempts++;
+      try {
+        const entropy = Math.floor(10 + Math.random() * 90);
+        const orderNumber = attempts === 1 && totalOrdersCount === 0 ? `QL-${baseSeq}` : `QL-${baseSeq}-${entropy}`;
+
+        newOrder = await Order.create({
+          orderNumber,
+          tokenNumber,
+          student: user._id,
+          studentName: user.name,
+          studentRollNo: user.studentId || 'N/A',
+          studentPhone: user.phone || '',
+          items: orderItemsSnapshot,
+          subtotal,
+          tax,
+          packagingFee,
+          lateFeeApplied: 0,
+          total,
+          status: 'PLACED',
+          pickupSlot: reservedSlot._id,
+          pickupSlotLabel: reservedSlot.label,
+          counterId: 'COUNTER-01',
+          paymentMethod: dto.paymentMethod,
+          paymentStatus,
+          idempotencyKey: dto.idempotencyKey,
+        });
+      } catch (createErr: any) {
+        if (createErr.code === 11000 && attempts < 5) {
+          continue; // Retry with fresh entropy
+        }
+        throw createErr;
+      }
+    }
+
+    if (!newOrder) {
+      throw new Error('Could not generate unique order number after multiple attempts.');
+    }
 
     // 8. Log initial status history
     await OrderStatusHistory.create({
@@ -170,6 +191,9 @@ export const createOrder = async (
       reason: 'Order placed by student',
       timestamp: new Date(),
     });
+
+    // 9. Real-time Socket.IO notification to staff and student
+    socketEmitter.emitOrderCreated(newOrder);
 
     return newOrder;
   } catch (error) {
@@ -280,6 +304,11 @@ export const updateOrderStatus = async (
     reason: rejectionReason || `Status changed to ${newStatus}`,
     timestamp: new Date(),
   });
+
+  // Real-time Socket.IO notification to student and staff
+  if (updatedOrder) {
+    socketEmitter.emitOrderStatusUpdate(updatedOrder, previousStatus);
+  }
 
   return updatedOrder;
 };

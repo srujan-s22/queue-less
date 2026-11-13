@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { StudentLayout } from '@/components/layout/StudentLayout';
@@ -13,11 +13,13 @@ import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { useSocket } from '@/lib/socket/useSocket';
 import {
   Clock,
   ArrowRight,
   RotateCw,
   FileText,
+  XCircle,
 } from 'lucide-react';
 
 export default function StudentOrderHistoryPage() {
@@ -26,10 +28,30 @@ export default function StudentOrderHistoryPage() {
   const { showToast } = useToast();
   const router = useRouter();
 
+  const [orders, setOrders] = useState<Order[]>(() => orderService.getAll());
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed'>('all');
   const [selectedInvoice, setSelectedInvoice] = useState<Order | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const studentOrders = orderService.getByStudentId(user.id);
+  const loadOrders = useCallback(async () => {
+    try {
+      const myOrders = await orderService.fetchMyOrders();
+      if (myOrders && Array.isArray(myOrders)) {
+        setOrders(myOrders);
+      }
+    } catch {
+      // keep current orders
+    }
+  }, []);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
+  useSocket('order:status_updated', () => { loadOrders(); });
+  useSocket('order:created', () => { loadOrders(); });
+
+  const studentOrders = orders.filter((o) => !user?.id || o.studentId === user.id || o.studentId === 'usr_stu_01');
 
   const filteredOrders = studentOrders.filter((order) => {
     if (activeTab === 'active') {
@@ -40,6 +62,27 @@ export default function StudentOrderHistoryPage() {
     }
     return true;
   });
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      setCancellingId(orderId);
+      await orderService.cancelOrder(orderId, 'Cancelled by student from order dashboard');
+      await loadOrders();
+      showToast({
+        type: 'info',
+        title: 'Order Cancelled',
+        message: `Order #${orderId} has been cancelled and slot capacity released.`,
+      });
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Cancellation Failed',
+        message: err.message || 'Cannot cancel an order that has already been accepted.',
+      });
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const handleReorder = (order: Order) => {
     order.items.forEach((item) => {
@@ -139,6 +182,16 @@ export default function StudentOrderHistoryPage() {
                       <FileText className="w-3.5 h-3.5 text-[#737373]" />
                       Receipt
                     </button>
+
+                    {order.status === 'PLACED' && (
+                      <button
+                        onClick={() => handleCancelOrder(order.id)}
+                        disabled={cancellingId === order.id}
+                        className="px-3 py-1.5 rounded-xl border border-red-200 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      >
+                        {cancellingId === order.id ? 'Cancelling...' : 'Cancel'}
+                      </button>
+                    )}
 
                     {isActive ? (
                       <Link href={`/student/orders/${order.id}/track`}>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { StudentLayout } from '@/components/layout/StudentLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -10,6 +10,7 @@ import { MenuItem, Order } from '@/types';
 import { FoodCard } from '@/components/student/FoodCard';
 import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useSocket } from '@/lib/socket/useSocket';
 import {
   Sparkles,
   ArrowRight,
@@ -23,17 +24,47 @@ export default function StudentDashboardPage() {
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
   const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
+  const [ordersCount, setOrdersCount] = useState<number>(8);
 
-  useEffect(() => {
-    queueMicrotask(() => {
+  const loadDashboardData = useCallback(async () => {
+    try {
+      const [allMenu, myOrders] = await Promise.all([
+        menuService.fetchMenuItems(),
+        orderService.fetchMyOrders(),
+      ]);
+
+      if (allMenu && allMenu.length > 0) {
+        setFeaturedItems(allMenu.filter((item) => item.isSpecial).slice(0, 3));
+        setPopularItems(allMenu.slice(0, 6));
+      }
+
+      if (myOrders && myOrders.length > 0) {
+        setOrdersCount(myOrders.length);
+        const currentActive = myOrders.find((o) =>
+          ['READY_FOR_PICKUP', 'PREPARING', 'ACCEPTED', 'PLACED'].includes(o.status)
+        );
+        setActiveOrder(currentActive || null);
+      } else {
+        const cachedActive = orderService.getActiveOrder(user?.id);
+        setActiveOrder(cachedActive || null);
+      }
+    } catch {
       const allMenu = menuService.getAll();
       setFeaturedItems(allMenu.filter((item) => item.isSpecial).slice(0, 3));
       setPopularItems(allMenu.slice(0, 6));
+      const cachedActive = orderService.getActiveOrder(user?.id);
+      setActiveOrder(cachedActive || null);
+    }
+  }, [user]);
 
-      const currentActive = orderService.getActiveOrder(user.id);
-      setActiveOrder(currentActive || null);
-    });
-  }, [user.id]);
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  // Real-time synchronization
+  useSocket('order:created', () => { loadDashboardData(); });
+  useSocket('order:status_updated', () => { loadDashboardData(); });
+  useSocket('inventory:updated', () => { loadDashboardData(); });
 
   return (
     <StudentLayout>
@@ -47,7 +78,7 @@ export default function StudentDashboardPage() {
                 <span>Apex University Central Canteen</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                Welcome back, {user.name.split(' ')[0]}
+                Welcome back, {(user?.name || 'Student').split(' ')[0]}
               </h1>
               <p className="mt-2 text-xs sm:text-sm text-[#A3A3A3] leading-relaxed">
                 Order during class and pick up when fresh. Never waste your 30-minute break standing in lunch counter lines.
@@ -74,7 +105,7 @@ export default function StudentDashboardPage() {
                 <span className="text-[10px] text-[#A3A3A3] block uppercase font-medium">Orders</span>
                 <span className="text-base sm:text-lg font-bold text-white flex items-center justify-center gap-1 mt-0.5">
                   <TrendingUp className="w-3.5 h-3.5 text-[#A3A3A3]" />
-                  8
+                  {ordersCount}
                 </span>
               </div>
             </div>

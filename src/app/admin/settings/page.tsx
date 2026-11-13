@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { configService } from '@/services/configService';
 import { CanteenConfig } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/lib/socket/useSocket';
 import { Clock, AlertTriangle, DollarSign, Save } from 'lucide-react';
 
 export default function AdminSettingsPage() {
@@ -23,32 +24,62 @@ export default function AdminSettingsPage() {
   const [taxPercent, setTaxPercent] = useState(String(config.taxRatePercent));
   const [announcement, setAnnouncement] = useState(config.announcement || '');
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    const updated = configService.updateConfig({
-      maxCapacityPerSlot: Number(capacity),
-      slotIntervalMinutes: Number(slotInterval),
-      packagingCharge: Number(packagingFee),
-      taxRatePercent: Number(taxPercent),
-      announcement,
-      operatingHours: {
-        open: openTime,
-        close: closeTime,
-      },
-      lateFeeConfig: {
-        gracePeriodMinutes: Number(gracePeriod),
-        lateFeeAmount: Number(lateFee),
-        policyDescription: lateFeePolicy,
-        isLateFeeEnabled: true,
-      },
-    });
+  const applyConfigToForm = useCallback((cfg: CanteenConfig) => {
+    setConfig(cfg);
+    setCapacity(String(cfg.maxCapacityPerSlot));
+    setSlotInterval(String(cfg.slotIntervalMinutes));
+    setGracePeriod(String(cfg.lateFeeConfig.gracePeriodMinutes));
+    setLateFee(String(cfg.lateFeeConfig.lateFeeAmount));
+    setLateFeePolicy(cfg.lateFeeConfig.policyDescription);
+    setOpenTime(cfg.operatingHours.open);
+    setCloseTime(cfg.operatingHours.close);
+    setPackagingFee(String(cfg.packagingCharge));
+    setTaxPercent(String(cfg.taxRatePercent));
+    setAnnouncement(cfg.announcement || '');
+  }, []);
 
-    setConfig(updated);
-    showToast({
-      type: 'success',
-      title: 'Configuration Saved',
-      message: 'Pickup slot caps, operating hours, and late fee policies updated live across all portals.',
-    });
+  useEffect(() => {
+    configService.fetchConfig().then(applyConfigToForm).catch(() => {});
+  }, [applyConfigToForm]);
+
+  useSocket('settings:updated', (data) => {
+    if (data) applyConfigToForm(data);
+  });
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const updated = await configService.updateConfig({
+        maxCapacityPerSlot: Number(capacity),
+        slotIntervalMinutes: Number(slotInterval),
+        packagingCharge: Number(packagingFee),
+        taxRatePercent: Number(taxPercent),
+        announcement,
+        operatingHours: {
+          open: openTime,
+          close: closeTime,
+        },
+        lateFeeConfig: {
+          gracePeriodMinutes: Number(gracePeriod),
+          lateFeeAmount: Number(lateFee),
+          policyDescription: lateFeePolicy,
+          isLateFeeEnabled: true,
+        },
+      });
+
+      applyConfigToForm(updated);
+      showToast({
+        type: 'success',
+        title: 'Configuration Saved',
+        message: 'Pickup slot caps, operating hours, and late fee policies updated live across all portals.',
+      });
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Save Failed',
+        message: err.message || 'Unable to persist configuration to backend',
+      });
+    }
   };
 
   return (

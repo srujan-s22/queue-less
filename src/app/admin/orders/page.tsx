@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { orderService } from '@/services/orderService';
+import { adminApi } from '@/lib/api/services/adminApi';
 import { Order, OrderStatus } from '@/types';
 import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/lib/socket/useSocket';
 import {
   Search,
 } from 'lucide-react';
@@ -19,20 +21,44 @@ export default function AdminOrdersPage() {
   const [overrideOrder, setOverrideOrder] = useState<Order | null>(null);
   const { showToast } = useToast();
 
-  const loadOrders = () => {
-    setOrders(orderService.getAll());
-  };
+  const loadOrders = useCallback(async () => {
+    try {
+      const res = await adminApi.listOrders({ page: 1, limit: 100 });
+      if (res && res.items && Array.isArray(res.items)) {
+        setOrders(res.items);
+        return;
+      }
+      setOrders(orderService.getAll());
+    } catch {
+      setOrders(orderService.getAll());
+    }
+  }, []);
 
-  const handleUpdateStatus = (newStatus: OrderStatus) => {
-    if (!overrideOrder) return;
-    orderService.updateStatus(overrideOrder.id, newStatus);
+  useEffect(() => {
     loadOrders();
-    setOverrideOrder(null);
-    showToast({
-      type: 'info',
-      title: 'Order Status Overridden',
-      message: `Order #${overrideOrder.id} status changed to ${newStatus}`,
-    });
+  }, [loadOrders]);
+
+  useSocket('order:created', () => { loadOrders(); });
+  useSocket('order:status_updated', () => { loadOrders(); });
+
+  const handleUpdateStatus = async (newStatus: OrderStatus) => {
+    if (!overrideOrder) return;
+    try {
+      await orderService.updateStatus(overrideOrder.id, newStatus);
+      await loadOrders();
+      setOverrideOrder(null);
+      showToast({
+        type: 'info',
+        title: 'Order Status Overridden',
+        message: `Order #${overrideOrder.id} status changed to ${newStatus}`,
+      });
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Override Failed',
+        message: err.message || 'Unable to update order status',
+      });
+    }
   };
 
   const filteredOrders = orders.filter((order) => {

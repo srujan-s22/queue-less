@@ -1,32 +1,48 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StaffLayout } from '@/components/layout/StaffLayout';
 import { orderService } from '@/services/orderService';
+import { staffApi } from '@/lib/api/services/staffApi';
 import { Order } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/lib/socket/useSocket';
 import { ChefHat, Check, Clock, User } from 'lucide-react';
 
 export default function StaffPreparationPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    return orderService.getAll().filter((o) => o.status === 'ACCEPTED' || o.status === 'PREPARING');
+  });
   const { showToast } = useToast();
 
-  const loadOrders = () => {
-    const all = orderService.getAll();
-    setOrders(all.filter((o) => o.status === 'ACCEPTED' || o.status === 'PREPARING'));
-  };
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      loadOrders();
-    });
+  const loadOrders = useCallback(async () => {
+    try {
+      const prep = await staffApi.getPreparation();
+      if (prep && Array.isArray(prep)) {
+        setOrders(prep);
+        return;
+      }
+      const all = orderService.getAll();
+      setOrders(all.filter((o) => o.status === 'ACCEPTED' || o.status === 'PREPARING'));
+    } catch {
+      const all = orderService.getAll();
+      setOrders(all.filter((o) => o.status === 'ACCEPTED' || o.status === 'PREPARING'));
+    }
   }, []);
 
-  const handleStartCooking = (orderId: string) => {
-    orderService.updateStatus(orderId, 'PREPARING');
+  useEffect(() => {
     loadOrders();
+  }, [loadOrders]);
+
+  useSocket('order:status_updated', () => { loadOrders(); });
+  useSocket('order:accepted', () => { loadOrders(); });
+  useSocket('order:cancelled', () => { loadOrders(); });
+
+  const handleStartCooking = async (orderId: string) => {
+    await orderService.updateStatus(orderId, 'PREPARING');
+    await loadOrders();
     showToast({
       type: 'info',
       title: 'Cooking Started',
@@ -34,9 +50,9 @@ export default function StaffPreparationPage() {
     });
   };
 
-  const handleMarkReady = (orderId: string) => {
-    orderService.updateStatus(orderId, 'READY_FOR_PICKUP');
-    loadOrders();
+  const handleMarkReady = async (orderId: string) => {
+    await orderService.updateStatus(orderId, 'READY_FOR_PICKUP');
+    await loadOrders();
     showToast({
       type: 'success',
       title: 'Order Ready for Pickup!',

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { StudentLayout } from '@/components/layout/StudentLayout';
 import { useCart } from '@/context/CartContext';
@@ -26,10 +26,23 @@ export default function StudentCheckoutPage() {
   const { user, updateUser } = useAuth();
   const { showToast } = useToast();
 
-  const slots = configService.getSlots();
+  const [slots, setSlots] = useState<PickupSlot[]>(() => configService.getSlots());
   const [selectedSlot, setSelectedSlot] = useState<PickupSlot | null>(slots[0] || null);
   const [paymentMethod, setPaymentMethod] = useState<'campus_wallet' | 'upi' | 'netbanking'>('campus_wallet');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    configService.fetchSlots().then((liveSlots) => {
+      if (liveSlots && liveSlots.length > 0) {
+        setSlots(liveSlots);
+        setSelectedSlot((prev) => {
+          if (!prev) return liveSlots[0];
+          const found = liveSlots.find((s) => s.id === prev.id);
+          return found || liveSlots[0];
+        });
+      }
+    }).catch(() => {});
+  }, []);
 
   // If cart is empty, redirect
   if (items.length === 0) {
@@ -39,7 +52,7 @@ export default function StudentCheckoutPage() {
     return null;
   }
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!selectedSlot) {
       showToast({
         type: 'error',
@@ -60,14 +73,14 @@ export default function StudentCheckoutPage() {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
       // Deduct from wallet if wallet payment
       if (paymentMethod === 'campus_wallet' && user.walletBalance !== undefined) {
         updateUser({ walletBalance: user.walletBalance - total });
       }
 
       // Create order via centralized orderService
-      const newOrder = orderService.createOrder({
+      const newOrder = await orderService.createOrder({
         student: user,
         items,
         pickupSlot: selectedSlot,
@@ -84,7 +97,16 @@ export default function StudentCheckoutPage() {
       });
 
       router.push(`/student/order-confirmation/${newOrder.id}`);
-    }, 600);
+    } catch (err: any) {
+      console.error('Error placing order:', err);
+      showToast({
+        type: 'error',
+        title: 'Checkout Failed',
+        message: err.message || 'Unable to place order. The selected slot may be full.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

@@ -34,16 +34,14 @@ QueueLess provides three dedicated, professionally designed workspaces:
 
 ## 3. Technology Stack
 
-### Frontend (Phase 1)
-- **Framework:** Next.js 16 (App Router with Server & Client components)
-- **Core Library:** React 19 & TypeScript 5
-- **Styling:** Tailwind CSS v4 with custom restaurant-tech design system tokens
-- **Icons:** Lucide React
-- **Celebration Effects:** Canvas Confetti
+### Full Stack (Phases 1, 2, and 3 - Complete)
+- **Frontend (Port 3000):** Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS v4, Socket.IO Client
+- **REST & Real-Time Gateway (Port 5000):** Node.js, Express.js, TypeScript, Mongoose ODM, Socket.IO Server
+- **Database (Port 27017):** MongoDB (8 collections: `users`, `menu_items`, `pickup_slots`, `orders`, `counters`, `canteen_settings`, `order_status_history`, `audit_logs`)
+- **Background Worker (`worker/`):** Standalone Node.js daemon (15s cadence) with atomic late-fee assessment
+- **Security & Integrity:** Dual HTTP-only JWT cookies + Bearer auth, bcrypt password hashing, atomic slot capacity protection, server-calculated pricing, Zod schema validation
 
-### Planned Backend & DevOps (Phase 2 & Future Phases)
-- **API Server:** Node.js, Express.js, TypeScript
-- **Database:** MongoDB (Mongoose ODM)
+### Planned DevOps (Future Phases)
 - **Containerization:** Docker & Docker Compose
 - **Orchestration:** Kubernetes & Minikube
 - **CI/CD:** GitHub Actions & Docker Hub
@@ -53,28 +51,43 @@ QueueLess provides three dedicated, professionally designed workspaces:
 ## 4. Getting Started
 
 ### Prerequisites
-- Node.js (v18.18.0 or newer recommended, developed on v24.22)
-- npm (v10+ or newer)
+- Node.js (v18.18+ or v20+, developed on v24)
+- npm (v10+)
+- MongoDB (v7+ or v8 running locally on default port `27017`)
 
-### Installation
+### 1. Database Setup & Seeding
 ```bash
-# Clone or navigate to the project directory
-cd queueless
+# Ensure local MongoDB is active
+brew services start mongodb/brew/mongodb-community # On macOS
 
-# Install dependencies
+# Seed the database with demo users, menu items, pickup slots, and settings
+cd backend
 npm install
+npm run seed
 ```
 
-### Running Locally
+### 2. Launch the Backend Server (Port 5000)
 ```bash
-# Start Next.js development server
+cd backend
 npm run dev
-
-# Or build and launch the production-optimized server
-npm run build
-npm run start -p 3000
+# Express REST API & Socket.IO Gateway active at http://localhost:5000
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 3. Launch the Background Worker
+```bash
+cd worker
+npm install
+npm run dev
+# Deadline scanner running every 15s
+```
+
+### 4. Launch the Next.js Frontend (Port 3000)
+```bash
+# In the repository root
+npm install
+npm run dev
+# Open http://localhost:3000 in your browser
+```
 
 ---
 

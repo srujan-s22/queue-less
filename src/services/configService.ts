@@ -1,6 +1,8 @@
 import { CanteenConfig, PickupSlot } from '@/types';
 import { INITIAL_CONFIG, INITIAL_PICKUP_SLOTS } from '@/data/mockData';
 import { storage } from './storage';
+import { settingsApi } from '@/lib/api/services/settingsApi';
+import { slotsApi } from '@/lib/api/services/slotsApi';
 
 const CONFIG_STORAGE_KEY = 'canteen_config';
 const SLOTS_STORAGE_KEY = 'pickup_slots';
@@ -10,7 +12,21 @@ export const configService = {
     return storage.get<CanteenConfig>(CONFIG_STORAGE_KEY, INITIAL_CONFIG);
   },
 
-  updateConfig(updates: Partial<CanteenConfig>): CanteenConfig {
+  async fetchConfig(): Promise<CanteenConfig> {
+    try {
+      const config = await settingsApi.getSettings();
+      if (config) {
+        storage.set(CONFIG_STORAGE_KEY, config);
+        return config;
+      }
+      return this.getConfig();
+    } catch (err) {
+      console.warn('[configService] Failed to fetch settings from API, using cached:', err);
+      return this.getConfig();
+    }
+  },
+
+  async updateConfig(updates: Partial<CanteenConfig>): Promise<CanteenConfig> {
     const current = this.getConfig();
     const updated = {
       ...current,
@@ -21,11 +37,33 @@ export const configService = {
       },
     };
     storage.set(CONFIG_STORAGE_KEY, updated);
-    return updated;
+
+    try {
+      const backendConfig = await settingsApi.updateSettings(updates);
+      storage.set(CONFIG_STORAGE_KEY, backendConfig);
+      return backendConfig;
+    } catch (err) {
+      console.warn('[configService] Failed to persist config to backend:', err);
+      return updated;
+    }
   },
 
   getSlots(): PickupSlot[] {
     return storage.get<PickupSlot[]>(SLOTS_STORAGE_KEY, INITIAL_PICKUP_SLOTS);
+  },
+
+  async fetchSlots(date?: string): Promise<PickupSlot[]> {
+    try {
+      const slots = await slotsApi.getSlots(date);
+      if (slots && slots.length > 0) {
+        storage.set(SLOTS_STORAGE_KEY, slots);
+        return slots;
+      }
+      return this.getSlots();
+    } catch (err) {
+      console.warn('[configService] Failed to fetch slots from API, using cached:', err);
+      return this.getSlots();
+    }
   },
 
   updateSlot(id: string, updates: Partial<PickupSlot>): PickupSlot | null {

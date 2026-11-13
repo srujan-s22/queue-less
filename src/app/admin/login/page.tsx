@@ -14,22 +14,30 @@ export default function AdminLoginPage() {
   const { showToast } = useToast();
 
   const [email, setEmail] = useState('ananya.iyer@campus.edu');
-  const [password, setPassword] = useState('Admin@QueueLess2026');
+  const [password, setPassword] = useState('admin123');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      login('admin', email);
+    try {
+      await login('admin', email, password);
       showToast({
         type: 'success',
         title: 'Admin Session Initialized',
         message: 'Welcome back, Dr. Ananya Iyer (Amenities & Canteen Admin)',
       });
       router.push('/admin/dashboard');
-    }, 400);
+    } catch (error: any) {
+      showToast({
+        type: 'error',
+        title: 'Admin Login Failed',
+        message: error.message || 'Invalid administrator credentials.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

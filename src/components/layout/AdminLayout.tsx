@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   LayoutDashboard,
@@ -24,8 +24,16 @@ interface AdminLayoutProps {
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const router = useRouter();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Route protection
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || user?.role !== 'admin')) {
+      router.replace('/admin/login');
+    }
+  }, [isLoading, isAuthenticated, user, router]);
 
   const adminNav = [
     { href: '/admin/dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
@@ -89,10 +97,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         <div className="p-4 border-t border-[#262626] bg-[#141414] flex items-center justify-between">
           <div className="flex items-center gap-2.5 truncate">
             <div className="w-8 h-8 rounded-lg bg-[#252525] border border-[#383838] flex items-center justify-center font-bold text-xs text-white">
-              {user.name.charAt(0)}
+              {(user?.name || 'A').charAt(0)}
             </div>
             <div className="text-xs truncate">
-              <p className="font-semibold text-white leading-tight truncate">{user.name}</p>
+              <p className="font-semibold text-white leading-tight truncate">{user?.name || 'Admin'}</p>
               <p className="text-[10px] text-[#A3A3A3] truncate">Canteen Administrator</p>
             </div>
           </div>

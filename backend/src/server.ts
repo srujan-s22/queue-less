@@ -1,7 +1,9 @@
+import http from 'http';
 import { createApp } from './app';
 import { connectDatabase, disconnectDatabase } from './config/db';
 import { env } from './config/env';
 import { logger } from './config/logger';
+import { initSocket } from './socket';
 
 const startServer = async () => {
   try {
@@ -10,14 +12,18 @@ const startServer = async () => {
 
     // 2. Initialize Express Application
     const app = createApp();
+    const httpServer = http.createServer(app);
 
-    // 3. Start HTTP Listener
-    const server = app.listen(env.PORT, () => {
+    // 3. Initialize Socket.IO Gateway
+    initSocket(httpServer);
+
+    // 4. Start HTTP Listener
+    const server = httpServer.listen(env.PORT, () => {
       logger.info(`QueueLess Backend API server running on port ${env.PORT} [${env.NODE_ENV}]`);
       logger.info(`Health check available at http://localhost:${env.PORT}/api/v1/health`);
     });
 
-    // 4. Graceful Shutdown Handlers
+    // 5. Graceful Shutdown Handlers
     const handleShutdown = async (signal: string) => {
       logger.info(`Received ${signal}. Shutting down gracefully...`);
       server.close(async () => {
