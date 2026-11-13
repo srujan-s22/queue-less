@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { StudentLayout } from '@/components/layout/StudentLayout';
 import { orderService } from '@/services/orderService';
 import { Order, OrderStatus } from '@/types';
@@ -12,28 +12,23 @@ import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
 import {
-  Clock,
-  MapPin,
-  QrCode,
-  ArrowRight,
   ChevronLeft,
   FastForward,
-  RotateCcw,
   CheckCircle2,
-  AlertCircle,
 } from 'lucide-react';
 
 export default function OrderTrackingPage() {
   const params = useParams();
-  const router = useRouter();
   const { showToast } = useToast();
   const orderId = typeof params.id === 'string' ? params.id : '';
 
   const [order, setOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    const found = orderService.getById(orderId);
-    if (found) setOrder({ ...found });
+    queueMicrotask(() => {
+      const found = orderService.getById(orderId);
+      if (found) setOrder({ ...found });
+    });
   }, [orderId]);
 
   if (!order) {

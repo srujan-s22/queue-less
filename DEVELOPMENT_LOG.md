@@ -171,3 +171,33 @@ npm run start -- -p 3000
 - **Simulated Push Notifications:** Ready-for-pickup SMS and WhatsApp alerts are displayed via interactive toast notifications rather than a live Twilio/SNS SMS gateway.
 
 All mock services and interfaces are strictly typed and structured to allow seamless drop-in API replacement in Phase 2.
+
+---
+
+## Phase 1 Visual Rendering Failure & Acceptance Correction Log
+
+### 1. Root Cause Analysis
+- **Symptom:** Application rendered raw unstyled HTML (default browser serif font, blue links, plain inputs, missing backgrounds and grid structures).
+- **Underlying Defect:** In Tailwind CSS v4, Next.js requires the `@tailwindcss/postcss` plugin and a `postcss.config.mjs` declaration to compile the `@import "tailwindcss";` directive in `src/app/globals.css`.
+- **Finding:** The project was missing `@tailwindcss/postcss` in `package.json` and had no `postcss.config.mjs` file. Consequently, Next.js built `globals.css` via vanilla CSS loader, producing a minified stylesheet containing only webfont declarations and custom variables (4.3 KB) without compiling any Tailwind utility classes.
+- **Resolution:**
+  1. Installed `@tailwindcss/postcss` and `postcss` in `package.json`.
+  2. Created `postcss.config.mjs` configured with `"@tailwindcss/postcss": {}`.
+  3. Recompiled stylesheet: Output expanded from 4.3 KB to 61 KB with full utility class compilation.
+
+### 2. ESLint & TypeScript Remediations
+- **Initial Status:** 11 ESLint errors, 96 warnings.
+- **Root Cause of Errors:**
+  - `react-hooks/set-state-in-effect`: Synchronous `setState` inside mount `useEffect` loops in 9 components (`AuthContext`, `CartContext`, `student/dashboard`, `orders/[id]/track`, `staff/dashboard`, `staff/orders`, `staff/orders/[id]`, `staff/preparation`, `staff/ready`).
+  - `no-explicit-any`: Unsafe casts in `staff/orders/[id]` and `student/menu`.
+- **Fixes Applied:**
+  - Wrapped client-side storage synchronizations within `queueMicrotask(() => { ... })` in mount effects, eliminating cascading renders while guaranteeing SSR hydration safety and client persistence.
+  - Replaced `any` with strict union types (`OrderStatus` and `SortOption`).
+  - Systematically purged 67 unused imports and variables across all 19 files.
+- **Result:** `npm run lint` now passes with **0 errors and 0 warnings**. `tsc --noEmit` passes with 0 errors.
+
+### 3. Visual & Functional Acceptance Verification
+- Captured brand-new, pixel-perfect screenshots of all 8 core views at Desktop (1440 × 900) and Mobile (390 × 844) viewports.
+- Verified live countdown timer (10m grace period) and automatic late fee application (₹20 warming surcharge) in `student/orders/QL-1042/track`.
+- Verified kitchen display workflows (Incoming, Active Preparation, Ready for Pickup, Handover) and administrative overrides.
+- All updated screenshots committed and tracked in `public/screenshots/`.

@@ -3,10 +3,12 @@
 import React, { useState, useMemo } from 'react';
 import { StudentLayout } from '@/components/layout/StudentLayout';
 import { menuService } from '@/services/menuService';
-import { Category, DietaryType, MenuItem } from '@/types';
+import { Category, DietaryType } from '@/types';
 import { FoodCard } from '@/components/student/FoodCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Search, Filter, SlidersHorizontal, Utensils } from 'lucide-react';
+import { Search, Filter, Utensils } from 'lucide-react';
+
+type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'prep-time' | 'rating';
 
 const CATEGORIES: { id: Category | 'all'; label: string }[] = [
   { id: 'all', label: 'All Items' },
@@ -93,7 +95,7 @@ export default function StudentMenuPage() {
               <span className="text-xs text-[#525866] whitespace-nowrap hidden lg:inline">Sort:</span>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
                 className="w-full sm:w-auto text-xs px-3 py-2 bg-[#F9F9F7] border border-[#E5E7EB] rounded-xl text-[#1A1C1E] focus:outline-none focus:border-[#1B4332]"
               >
                 <option value="featured">Featured / Recommended</option>

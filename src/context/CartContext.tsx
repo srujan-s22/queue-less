@@ -26,9 +26,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const saved = storage.get<OrderItem[]>(CART_STORAGE_KEY, []);
-    setItems(saved);
-    setIsLoaded(true);
+    queueMicrotask(() => {
+      const saved = storage.get<OrderItem[]>(CART_STORAGE_KEY, []);
+      setItems(saved);
+      setIsLoaded(true);
+    });
   }, []);
 
   const saveItems = (newItems: OrderItem[]) => {

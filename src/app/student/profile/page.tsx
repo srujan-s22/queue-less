@@ -6,13 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui/Button';
 import {
-  User as UserIcon,
   Wallet,
-  Mail,
-  Phone,
-  GraduationCap,
-  Bell,
-  CheckCircle2,
   Plus,
 } from 'lucide-react';
 
@@ -23,7 +17,6 @@ export default function StudentProfilePage() {
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone || '+91 98765 43210');
   const [department, setDepartment] = useState(user.department || 'Computer Science & Engg.');
-  const [dietaryPreference, setDietaryPreference] = useState<'veg' | 'non-veg' | 'vegan'>('veg');
   const [smsAlerts, setSmsAlerts] = useState(true);
   const [whatsappAlerts, setWhatsappAlerts] = useState(true);
 

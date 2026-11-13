@@ -16,8 +16,6 @@ import {
   Minus,
   ArrowRight,
   ShieldCheck,
-  Clock,
-  Sparkles,
 } from 'lucide-react';
 
 export default function StudentCartPage() {

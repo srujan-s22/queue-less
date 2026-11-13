@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui/Button';
-import { ChefHat, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
+import { ChefHat, ArrowRight, KeyRound } from 'lucide-react';
 
 export default function StaffLoginPage() {
   const router = useRouter();

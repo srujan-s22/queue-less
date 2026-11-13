@@ -116,6 +116,16 @@ export const orderService = {
     return updated;
   },
 
+  saveOrder(updated: Order): Order {
+    const orders = this.getAll();
+    const index = orders.findIndex((o) => o.id === updated.id);
+    if (index !== -1) {
+      orders[index] = updated;
+      storage.set(ORDERS_STORAGE_KEY, orders);
+    }
+    return updated;
+  },
+
   calculateLateFee(order: Order): { isLate: boolean; lateFee: number; minutesLate: number } {
     const config = configService.getConfig();
     if (!config.lateFeeConfig.isLateFeeEnabled || order.status !== 'READY_FOR_PICKUP') {

@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui/Button';
-import { UtensilsCrossed, ArrowRight, GraduationCap, ChefHat, ShieldCheck, KeyRound } from 'lucide-react';
+import { UtensilsCrossed, ArrowRight, GraduationCap, ChefHat, ShieldCheck } from 'lucide-react';
 import { Role } from '@/types';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, switchRole } = useAuth();
+  const { login } = useAuth();
   const { showToast } = useToast();
 
   const [email, setEmail] = useState('aarav.sharma@campus.edu');

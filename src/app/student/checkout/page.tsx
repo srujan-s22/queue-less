@@ -16,8 +16,6 @@ import {
   Wallet,
   Smartphone,
   CreditCard,
-  ShieldCheck,
-  AlertCircle,
   ArrowRight,
   Info,
 } from 'lucide-react';

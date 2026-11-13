@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { StaffLayout } from '@/components/layout/StaffLayout';
 import { orderService } from '@/services/orderService';
-import { Order } from '@/types';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Archive, Search, CheckCircle2, FileText } from 'lucide-react';
+import { Archive, Search, CheckCircle2 } from 'lucide-react';
 
 export default function StaffCompletedPage() {
   const [search, setSearch] = useState('');

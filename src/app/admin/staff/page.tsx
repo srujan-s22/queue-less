@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
-import { Users, UserCheck, Shield, Plus, Clock, MapPin, ChefHat } from 'lucide-react';
 
 interface StaffMember {
   id: string;

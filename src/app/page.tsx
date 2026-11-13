@@ -2,23 +2,17 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/Button';
 import {
   UtensilsCrossed,
   ArrowRight,
   GraduationCap,
   ChefHat,
   ShieldCheck,
-  Clock,
-  Zap,
   CheckCircle2,
-  AlertTriangle,
   Sparkles,
   ChevronRight,
-  ShoppingBag,
 } from 'lucide-react';
 
 export default function HomePage() {

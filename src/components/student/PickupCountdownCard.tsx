@@ -57,6 +57,7 @@ export const PickupCountdownCard: React.FC<PickupCountdownCardProps> = ({
     const updated = orderService.updateStatus(order.id, 'READY_FOR_PICKUP');
     if (updated) {
       updated.pickupDeadline = overdueDeadline;
+      orderService.saveOrder(updated);
       const finalOrder = orderService.applyLateFee(order.id) || updated;
       if (onOrderUpdated) onOrderUpdated(finalOrder);
     }
@@ -69,6 +70,7 @@ export const PickupCountdownCard: React.FC<PickupCountdownCardProps> = ({
     if (updated) {
       updated.pickupDeadline = urgentDeadline;
       updated.lateFeeApplied = 0;
+      orderService.saveOrder(updated);
       if (onOrderUpdated) onOrderUpdated(updated);
     }
   };
@@ -79,6 +81,7 @@ export const PickupCountdownCard: React.FC<PickupCountdownCardProps> = ({
     if (updated) {
       updated.pickupDeadline = freshDeadline;
       updated.lateFeeApplied = 0;
+      orderService.saveOrder(updated);
       if (onOrderUpdated) onOrderUpdated(updated);
     }
   };

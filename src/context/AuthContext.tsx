@@ -27,16 +27,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   useEffect(() => {
-    const savedRole = storage.get<Role>(CURRENT_ROLE_KEY, 'student');
-    const customUser = storage.get<User | null>(CUSTOM_USER_KEY, null);
+    queueMicrotask(() => {
+      const savedRole = storage.get<Role>(CURRENT_ROLE_KEY, 'student');
+      const customUser = storage.get<User | null>(CUSTOM_USER_KEY, null);
 
-    setRole(savedRole);
-    if (customUser && customUser.role === savedRole) {
-      setUser(customUser);
-    } else {
-      setUser(MOCK_USERS[savedRole] || MOCK_USERS.student);
-    }
-    setIsInitialized(true);
+      setRole(savedRole);
+      if (customUser && customUser.role === savedRole) {
+        setUser(customUser);
+      } else {
+        setUser(MOCK_USERS[savedRole] || MOCK_USERS.student);
+      }
+      setIsInitialized(true);
+    });
   }, []);
 
   const switchRole = (newRole: Role) => {

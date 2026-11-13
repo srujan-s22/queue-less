@@ -6,7 +6,6 @@ import { StudentLayout } from '@/components/layout/StudentLayout';
 import { useAuth } from '@/context/AuthContext';
 import { menuService } from '@/services/menuService';
 import { orderService } from '@/services/orderService';
-import { configService } from '@/services/configService';
 import { MenuItem, Order } from '@/types';
 import { FoodCard } from '@/components/student/FoodCard';
 import { OrderStatusBadge } from '@/components/ui/Badge';
@@ -14,12 +13,9 @@ import { Button } from '@/components/ui/Button';
 import {
   Sparkles,
   ArrowRight,
-  Clock,
   Wallet,
   Zap,
   TrendingUp,
-  ShoppingBag,
-  CheckCircle,
 } from 'lucide-react';
 
 export default function StudentDashboardPage() {
@@ -27,15 +23,16 @@ export default function StudentDashboardPage() {
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
   const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
-  const config = configService.getConfig();
 
   useEffect(() => {
-    const allMenu = menuService.getAll();
-    setFeaturedItems(allMenu.filter((item) => item.isSpecial).slice(0, 3));
-    setPopularItems(allMenu.slice(0, 6));
+    queueMicrotask(() => {
+      const allMenu = menuService.getAll();
+      setFeaturedItems(allMenu.filter((item) => item.isSpecial).slice(0, 3));
+      setPopularItems(allMenu.slice(0, 6));
 
-    const currentActive = orderService.getActiveOrder(user.id);
-    setActiveOrder(currentActive || null);
+      const currentActive = orderService.getActiveOrder(user.id);
+      setActiveOrder(currentActive || null);
+    });
   }, [user.id]);
 
   return (

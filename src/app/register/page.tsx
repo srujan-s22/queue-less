@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui/Button';
-import { UtensilsCrossed, ArrowRight, UserPlus } from 'lucide-react';
+import { UtensilsCrossed, ArrowRight } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();

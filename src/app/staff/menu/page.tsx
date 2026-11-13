@@ -7,7 +7,7 @@ import { menuService } from '@/services/menuService';
 import { MenuItem, Category } from '@/types';
 import { useToast } from '@/context/ToastContext';
 import { DietaryBadge } from '@/components/ui/Badge';
-import { Search, ToggleLeft, ToggleRight, Check, X, AlertCircle } from 'lucide-react';
+import { Search, Check, X } from 'lucide-react';
 
 export default function StaffMenuManagementPage() {
   const [items, setItems] = useState<MenuItem[]>(() => menuService.getAll());

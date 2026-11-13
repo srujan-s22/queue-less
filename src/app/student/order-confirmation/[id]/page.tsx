@@ -5,18 +5,13 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { StudentLayout } from '@/components/layout/StudentLayout';
 import { orderService } from '@/services/orderService';
-import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import confetti from 'canvas-confetti';
 import {
   CheckCircle,
-  Clock,
   ArrowRight,
-  ShoppingBag,
   QrCode,
   MapPin,
-  FileText,
-  Printer,
 } from 'lucide-react';
 
 export default function OrderConfirmationPage() {
@@ -33,7 +28,7 @@ export default function OrderConfirmationPage() {
         origin: { y: 0.7 },
         colors: ['#1B4332', '#34D399', '#F59E0B', '#10B981'],
       });
-    } catch (e) {
+    } catch {
       // safe fallback
     }
   }, []);

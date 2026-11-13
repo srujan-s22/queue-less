@@ -2,34 +2,33 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { StaffLayout } from '@/components/layout/StaffLayout';
 import { orderService } from '@/services/orderService';
-import { Order } from '@/types';
+import { Order, OrderStatus } from '@/types';
 import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
 import {
   ChevronLeft,
   User,
-  Clock,
   Phone,
   Check,
   ChefHat,
-  AlertTriangle,
 } from 'lucide-react';
 
 export default function StaffOrderDetailsPage() {
   const params = useParams();
-  const router = useRouter();
   const { showToast } = useToast();
   const orderId = typeof params.id === 'string' ? params.id : '';
 
   const [order, setOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    const found = orderService.getById(orderId);
-    if (found) setOrder({ ...found });
+    queueMicrotask(() => {
+      const found = orderService.getById(orderId);
+      if (found) setOrder({ ...found });
+    });
   }, [orderId]);
 
   if (!order) {
@@ -46,7 +45,7 @@ export default function StaffOrderDetailsPage() {
     );
   }
 
-  const handleStatusUpdate = (newStatus: any) => {
+  const handleStatusUpdate = (newStatus: OrderStatus) => {
     const updated = orderService.updateStatus(order.id, newStatus);
     if (updated) {
       setOrder({ ...updated });

@@ -6,7 +6,7 @@ import { configService } from '@/services/configService';
 import { CanteenConfig } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
-import { Settings, Clock, AlertTriangle, ShieldCheck, DollarSign, Save } from 'lucide-react';
+import { Clock, AlertTriangle, DollarSign, Save } from 'lucide-react';
 
 export default function AdminSettingsPage() {
   const [config, setConfig] = useState<CanteenConfig>(() => configService.getConfig());

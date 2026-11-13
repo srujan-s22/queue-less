@@ -9,14 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/context/ToastContext';
 import {
-  ClipboardList,
   Search,
-  Filter,
-  MoreVertical,
-  CheckCircle,
-  XCircle,
-  Clock,
-  RotateCcw,
 } from 'lucide-react';
 
 export default function AdminOrdersPage() {

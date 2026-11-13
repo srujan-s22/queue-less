@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { StaffLayout } from '@/components/layout/StaffLayout';
 import { orderService } from '@/services/orderService';
-import { Order, OrderStatus } from '@/types';
+import { Order } from '@/types';
 import { StatCard } from '@/components/ui/StatCard';
 import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -14,13 +14,8 @@ import {
   ChefHat,
   CheckCircle,
   Archive,
-  Clock,
   ArrowRight,
-  TrendingUp,
-  AlertTriangle,
   Check,
-  X,
-  Volume2,
 } from 'lucide-react';
 
 export default function StaffDashboardPage() {
@@ -32,7 +27,9 @@ export default function StaffDashboardPage() {
   };
 
   useEffect(() => {
-    loadOrders();
+    queueMicrotask(() => {
+      loadOrders();
+    });
   }, []);
 
   const incomingOrders = orders.filter((o) => o.status === 'PLACED');
@@ -41,16 +38,6 @@ export default function StaffDashboardPage() {
   const completedOrders = orders.filter((o) => o.status === 'PICKED_UP');
 
   // Fast operational actions
-  const handleAccept = (orderId: string) => {
-    orderService.updateStatus(orderId, 'ACCEPTED');
-    loadOrders();
-    showToast({
-      type: 'success',
-      title: 'Order Accepted',
-      message: `Ticket #${orderId} moved to kitchen queue`,
-    });
-  };
-
   const handleStartPrep = (orderId: string) => {
     orderService.updateStatus(orderId, 'PREPARING');
     loadOrders();

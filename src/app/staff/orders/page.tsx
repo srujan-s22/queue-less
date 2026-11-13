@@ -14,8 +14,6 @@ import {
   X,
   Clock,
   User,
-  ShoppingBag,
-  AlertTriangle,
 } from 'lucide-react';
 
 export default function StaffIncomingOrdersPage() {
@@ -30,7 +28,9 @@ export default function StaffIncomingOrdersPage() {
   };
 
   useEffect(() => {
-    loadOrders();
+    queueMicrotask(() => {
+      loadOrders();
+    });
   }, []);
 
   const handleAccept = (orderId: string) => {

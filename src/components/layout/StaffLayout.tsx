@@ -16,7 +16,6 @@ import {
   LogOut,
   Menu as MenuIcon,
   X,
-  Volume2,
 } from 'lucide-react';
 
 interface StaffLayoutProps {

@@ -18,8 +18,6 @@ import {
   Plus,
   Minus,
   Check,
-  ShieldCheck,
-  Sparkles,
 } from 'lucide-react';
 
 export default function FoodItemDetailsPage() {

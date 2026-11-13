@@ -19,7 +19,9 @@ export default function StaffPreparationPage() {
   };
 
   useEffect(() => {
-    loadOrders();
+    queueMicrotask(() => {
+      loadOrders();
+    });
   }, []);
 
   const handleStartCooking = (orderId: string) => {

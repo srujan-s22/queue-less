@@ -1,30 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { orderService } from '@/services/orderService';
 import { menuService } from '@/services/menuService';
-import { configService } from '@/services/configService';
 import { StatCard } from '@/components/ui/StatCard';
 import { OrderStatusBadge } from '@/components/ui/Badge';
 import {
   TrendingUp,
   DollarSign,
   ShoppingBag,
-  Users,
   Clock,
   ArrowRight,
   Flame,
-  Award,
-  Sparkles,
   BarChart2,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const orders = orderService.getAll();
   const menuItems = menuService.getAll();
-  const config = configService.getConfig();
 
   // Metrics
   const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);

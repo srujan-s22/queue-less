@@ -8,7 +8,7 @@ import { orderService } from '@/services/orderService';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
-import { Order, OrderStatus } from '@/types';
+import { Order } from '@/types';
 import { OrderStatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -18,9 +18,6 @@ import {
   ArrowRight,
   RotateCw,
   FileText,
-  ShoppingBag,
-  CheckCircle2,
-  AlertTriangle,
 } from 'lucide-react';
 
 export default function StudentOrderHistoryPage() {

@@ -12,9 +12,6 @@ import {
   Search,
   Check,
   AlertTriangle,
-  Clock,
-  User,
-  ShieldAlert,
 } from 'lucide-react';
 
 export default function StaffReadyPage() {
@@ -28,7 +25,9 @@ export default function StaffReadyPage() {
   };
 
   useEffect(() => {
-    loadOrders();
+    queueMicrotask(() => {
+      loadOrders();
+    });
     const interval = setInterval(loadOrders, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -83,7 +82,7 @@ export default function StaffReadyPage() {
         {filteredOrders.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredOrders.map((order) => {
-              const { isLate, lateFee, minutesLate } = orderService.calculateLateFee(order);
+              const { isLate, lateFee } = orderService.calculateLateFee(order);
 
               return (
                 <div

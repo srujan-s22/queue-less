@@ -3,17 +3,14 @@
 import React from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { orderService } from '@/services/orderService';
-import { menuService } from '@/services/menuService';
 import { StatCard } from '@/components/ui/StatCard';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
 import {
-  BarChart3,
   Download,
   TrendingUp,
   Zap,
   Clock,
-  Sparkles,
   ShieldCheck,
   CheckCircle,
 } from 'lucide-react';
