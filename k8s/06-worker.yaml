@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: queueless
+  labels:
+    app.kubernetes.io/name: worker
+    app.kubernetes.io/part-of: queueless-platform
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: worker
+        app.kubernetes.io/part-of: queueless-platform
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: worker
+          image: queueless-worker:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: queueless-config
+                  key: NODE_ENV
+            - name: MONGODB_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: queueless-config
+                  key: MONGODB_URI
+            - name: POLL_INTERVAL_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: queueless-config
+                  key: POLL_INTERVAL_MS
+          resources:
+            requests:
+              cpu: 50m
+              memory: 100Mi
+            limits:
+              cpu: 150m
+              memory: 200Mi
+          startupProbe:
+            exec:
+              command:
+                - node
+                - -e
+                - "const fs=require('fs'); if(!fs.existsSync('/tmp/worker-heartbeat') || Date.now() - fs.statSync('/tmp/worker-heartbeat').mtimeMs > 45000) process.exit(1);"
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+                - node
+                - -e
+                - "const fs=require('fs'); if(!fs.existsSync('/tmp/worker-heartbeat') || Date.now() - fs.statSync('/tmp/worker-heartbeat').mtimeMs > 45000) process.exit(1);"
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - node
+                - -e
+                - "const fs=require('fs'); if(!fs.existsSync('/tmp/worker-heartbeat') || Date.now() - fs.statSync('/tmp/worker-heartbeat').mtimeMs > 45000) process.exit(1);"
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 2
+

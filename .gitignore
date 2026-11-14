@@ -36,6 +36,10 @@ yarn-error.log*
 !backend/.env.example
 !worker/.env.example
 
+# kubernetes secrets
+k8s/02-secret.yaml
+!k8s/02-secret.yaml.example
+
 # vercel
 .vercel
 
