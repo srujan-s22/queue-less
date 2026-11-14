@@ -1,13 +1,16 @@
 import { Types } from 'mongoose';
+import bcrypt from 'bcryptjs';
 import {
   Order,
   CanteenSettings,
   AuditLog,
   User,
+  Counter,
   ICanteenSettings,
 } from '../models';
 import { formatToIST } from '../utils/timezone';
 import { socketEmitter } from '../socket/emitter';
+import { ConflictError, NotFoundError } from '../utils/errors';
 
 export interface AdminOrderQuery {
   page?: number;
@@ -232,4 +235,97 @@ export const exportOrdersCsv = async (): Promise<string> => {
   });
 
   return [headers.join(','), ...rows].join('\n');
+};
+
+export interface CreateStaffInput {
+  name: string;
+  email: string;
+  password: string;
+  department?: string;
+  phone?: string;
+}
+
+export const getStaffRoster = async () => {
+  const [staffUsers, counters] = await Promise.all([
+    User.find({ role: 'staff' }).select('-passwordHash').sort({ createdAt: 1 }),
+    Counter.find(),
+  ]);
+
+  return staffUsers.map((u, idx) => {
+    const assignedCounter = counters.find(
+      (c) => c.activeOperatorId && c.activeOperatorId.toString() === u._id.toString()
+    ) || counters[idx % Math.max(1, counters.length)];
+
+    return {
+      id: u._id.toString(),
+      name: u.name,
+      email: u.email,
+      role: 'Kitchen Operator',
+      counter: assignedCounter ? `${assignedCounter.name} (${assignedCounter.counterIdentifier})` : 'Express Counter #2',
+      shift: u.department || '07:30 AM – 03:30 PM (Morning)',
+      status: u.status === 'active' ? 'Active' : 'On Break',
+      phone: u.phone || '+91 98111 22334',
+      createdAt: u.createdAt,
+    };
+  });
+};
+
+export const createStaffMember = async (input: CreateStaffInput) => {
+  const existing = await User.findOne({ email: input.email.toLowerCase().trim() });
+  if (existing) {
+    throw new ConflictError('A user with that email already exists.');
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, 10);
+  const newStaff = await User.create({
+    name: input.name.trim(),
+    email: input.email.toLowerCase().trim(),
+    passwordHash,
+    role: 'staff',
+    department: input.department?.trim() || 'Central Canteen Operations',
+    phone: input.phone?.trim() || '',
+    walletBalance: 0,
+    status: 'active',
+  });
+
+  return {
+    id: newStaff._id.toString(),
+    name: newStaff.name,
+    email: newStaff.email,
+    role: 'Kitchen Operator',
+    counter: 'Counter #2 (Express Lunch & Bowls)',
+    shift: newStaff.department || '07:30 AM – 03:30 PM (Morning)',
+    status: 'Active',
+    phone: newStaff.phone,
+    createdAt: newStaff.createdAt,
+  };
+};
+
+export const updateStaffStatus = async (staffId: string, status?: string) => {
+  const staff = await User.findOne({ _id: staffId, role: 'staff' });
+  if (!staff) {
+    throw new NotFoundError('Staff member not found.');
+  }
+
+  let newStatus: 'active' | 'suspended';
+  if (status) {
+    newStatus = status.toLowerCase() === 'active' ? 'active' : 'suspended';
+  } else {
+    newStatus = staff.status === 'active' ? 'suspended' : 'active';
+  }
+
+  staff.status = newStatus;
+  await staff.save();
+
+  return {
+    id: staff._id.toString(),
+    name: staff.name,
+    email: staff.email,
+    role: 'Kitchen Operator',
+    counter: 'Counter #2 (Express Lunch & Bowls)',
+    shift: staff.department || '07:30 AM – 03:30 PM (Morning)',
+    status: newStatus === 'active' ? 'Active' : 'On Break',
+    phone: staff.phone,
+    createdAt: staff.createdAt,
+  };
 };

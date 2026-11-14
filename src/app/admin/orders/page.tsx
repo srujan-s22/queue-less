@@ -152,7 +152,7 @@ export default function AdminOrdersPage() {
                         <span className="font-mono font-bold bg-[#252525] text-white px-2 py-0.5 rounded text-[11px]">
                           {order.tokenNumber}
                         </span>
-                        <span className="font-semibold text-[#252525]">#{order.id}</span>
+                        <span className="font-semibold text-[#252525]">#{order.orderNumber || order.id}</span>
                       </div>
                       <span className="text-[10px] text-gray-400 block mt-0.5">
                         {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -206,7 +206,7 @@ export default function AdminOrdersPage() {
           <Modal
             isOpen={!!overrideOrder}
             onClose={() => setOverrideOrder(null)}
-            title={`Administrative Override — Order #${overrideOrder.id}`}
+            title={`Administrative Override — Order #${overrideOrder.orderNumber || overrideOrder.id}`}
             description={`Customer: ${overrideOrder.studentName} • Current Status: ${overrideOrder.status}`}
           >
             <div className="space-y-4 text-xs">

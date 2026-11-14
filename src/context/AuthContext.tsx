@@ -30,7 +30,7 @@ const DEMO_CREDENTIALS: Record<Role, { email: string; password: string }> = {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRole] = useState<Role>('student');
   const [user, setUser] = useState<User>(MOCK_USERS.student);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Restore authenticated session from backend cookie on initial load
@@ -42,18 +42,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRole(currentUser.role);
         setIsAuthenticated(true);
       } catch {
-        // If not authenticated via cookie, check if we have demo default
-        try {
-          const demoUser = await authApi.login(DEMO_CREDENTIALS.student);
-          setUser(demoUser);
-          setRole(demoUser.role);
-          setIsAuthenticated(true);
-        } catch {
-          // Fallback to mock student if backend is offline
-          setUser(MOCK_USERS.student);
-          setRole('student');
-          setIsAuthenticated(true);
-        }
+        // When session restoration fails (e.g. 401 unauthenticated), clear authenticated state.
+        // Never silently re-authenticate a user into a demo session!
+        setIsAuthenticated(false);
+        setUser(MOCK_USERS.student);
+        setRole('student');
       } finally {
         setIsLoading(false);
       }
@@ -125,6 +118,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Ignore logout errors
     } finally {
       setIsAuthenticated(false);
+      setUser(MOCK_USERS.student);
+      setRole('student');
     }
   };
 

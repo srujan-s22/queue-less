@@ -115,7 +115,7 @@ export default function StaffReadyPage() {
                       </span>
                       <div>
                         <span className="font-bold text-xs text-[#252525] block">
-                          #{order.id}
+                          #{order.orderNumber || order.id}
                         </span>
                         <span className="text-[10px] text-[#737373]">
                           {order.pickupSlot.label}

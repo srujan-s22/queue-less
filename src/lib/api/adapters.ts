@@ -118,7 +118,8 @@ export const adaptOrder = (raw: any): Order => {
       };
 
   return {
-    id: base.orderNumber || base.id,
+    id: String(base._id || base.id),
+    orderNumber: base.orderNumber || (base.id && base.id.startsWith('QL-') ? base.id : `QL-${String(base._id || base.id).slice(-4)}`),
     tokenNumber: base.tokenNumber || 'A-01',
     studentId: String(base.student?._id || base.student || base.studentId || ''),
     studentName: base.studentName || '',

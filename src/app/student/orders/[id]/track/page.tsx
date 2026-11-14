@@ -14,7 +14,6 @@ import { useToast } from '@/context/ToastContext';
 import { useOrderSocket } from '@/lib/socket/useSocket';
 import {
   ChevronLeft,
-  FastForward,
   CheckCircle2,
 } from 'lucide-react';
 
@@ -83,41 +82,6 @@ export default function OrderTrackingPage() {
     );
   }
 
-  // Advance lifecycle simulation helper
-  const handleAdvanceStatus = async () => {
-    const cycle: OrderStatus[] = [
-      'PLACED',
-      'ACCEPTED',
-      'PREPARING',
-      'READY_FOR_PICKUP',
-      'PICKED_UP',
-    ];
-    const currentIndex = cycle.indexOf(order.status);
-    if (currentIndex < cycle.length - 1) {
-      const nextStatus = cycle[currentIndex + 1];
-      const updated = await orderService.updateStatus(order.id, nextStatus);
-      if (updated) {
-        setOrder({ ...updated });
-        showToast({
-          type: 'info',
-          title: `Status Updated: ${nextStatus.replace('_', ' ')}`,
-          message: `Order #${order.id} is now ${nextStatus}`,
-        });
-      }
-    } else {
-      // Loop back to PLACED for demo
-      const updated = await orderService.updateStatus(order.id, 'PLACED');
-      if (updated) {
-        setOrder({ ...updated });
-        showToast({
-          type: 'info',
-          title: 'Status Reset to Placed',
-          message: 'Simulation restarted for testing',
-        });
-      }
-    }
-  };
-
   return (
     <StudentLayout>
       <div className="max-w-3xl mx-auto space-y-6">
@@ -130,16 +94,6 @@ export default function OrderTrackingPage() {
             <ChevronLeft className="w-4 h-4" />
             <span>Back to All Orders</span>
           </Link>
-
-          {/* Evaluation Simulation Button */}
-          <Button
-            onClick={handleAdvanceStatus}
-            variant="outline"
-            size="sm"
-            leftIcon={<FastForward className="w-3.5 h-3.5 text-[#252525]" />}
-          >
-            Simulate Next Status ({order.status === 'PICKED_UP' ? 'Restart' : 'Advance'})
-          </Button>
         </div>
 
         {/* Main Status Header Card */}
@@ -150,7 +104,7 @@ export default function OrderTrackingPage() {
                 Live Kitchen Tracker
               </span>
               <div className="flex items-center gap-3 mt-1">
-                <h1 className="text-2xl font-bold text-[#252525]">Order #{order.id}</h1>
+                <h1 className="text-2xl font-bold text-[#252525]">Order #{order.orderNumber || order.id}</h1>
                 <OrderStatusBadge status={order.status} />
               </div>
               <p className="text-xs text-[#737373] mt-1">

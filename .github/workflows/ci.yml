@@ -1,0 +1,452 @@
+name: QueueLess CI — Code Quality & Test Matrix
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # =========================================================================
+  # GATE 1: FRONTEND QUALITY GATE
+  # =========================================================================
+  frontend-gate:
+    name: "Frontend: Lint, Typecheck & Build"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22 Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install Dependencies (Reproducible)
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Validate TypeScript Types
+        run: npx tsc --noEmit
+
+      - name: Validate Next.js Production Standalone Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'http://queueless.local/api/v1' }}
+          NEXT_PUBLIC_SOCKET_URL: ${{ vars.NEXT_PUBLIC_SOCKET_URL || 'http://queueless.local' }}
+          NEXT_TELEMETRY_DISABLED: 1
+
+  # =========================================================================
+  # GATE 2: BACKEND QUALITY GATE
+  # =========================================================================
+  backend-gate:
+    name: "Backend: Typecheck & Integration Tests"
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22 Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Compile TypeScript & Typecheck
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Seed Test Database
+        working-directory: ./backend
+        run: npm run seed
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/queueless_ci_test
+
+      - name: Run Jest Integration Test Suite (43 Tests in 6 Suites)
+        working-directory: ./backend
+        run: npm test
+        env:
+          NODE_ENV: test
+          PORT: 5001
+          MONGODB_URI: mongodb://127.0.0.1:27017/queueless_ci_test
+          JWT_SECRET: ci_pipeline_test_jwt_secret_minimum_32_characters_long
+          CLIENT_URL: http://localhost:3000
+
+  # =========================================================================
+  # GATE 3: WORKER QUALITY GATE
+  # =========================================================================
+  worker-gate:
+    name: "Worker: Typecheck & Late-Fee Engine Tests"
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22 Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: worker/package-lock.json
+
+      - name: Install Worker Dependencies
+        working-directory: ./worker
+        run: npm ci
+
+      - name: Compile TypeScript & Typecheck
+        working-directory: ./worker
+        run: npm run build
+
+      - name: Run Jest Late-Fee Worker Test Suite (2 Tests in 1 Suite)
+        working-directory: ./worker
+        run: npm test
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/queueless_ci_test
+          POLL_INTERVAL_MS: 5000
+
+  # =========================================================================
+  # GATE 4: MANIFEST QUALITY GATE
+  # (Strict Offline Validation; Zero Cluster Discovery)
+  # =========================================================================
+  manifest-gate:
+    name: "Manifests: Docker Compose & Kubernetes Validation"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose Configuration & Interpolation
+        run: |
+          JWT_SECRET="ci_dummy_validation_secret_minimum_32_characters_long" docker compose config --quiet
+
+      - name: Download & Verify Kubeconform Release (Pinned v0.6.7)
+        run: |
+          KUBECONFORM_VERSION="v0.6.7"
+          EXPECTED_SHA256="95f14e87aa28c09d5941f11bd024c1d02fdc0303ccaa23f61cef67bc92619d73"
+          curl -sL -o kubeconform-linux-amd64.tar.gz "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "${EXPECTED_SHA256}  kubeconform-linux-amd64.tar.gz" | sha256sum --check
+          tar -xzf kubeconform-linux-amd64.tar.gz
+          sudo mv kubeconform /usr/local/bin/
+          kubeconform -v
+
+      - name: Authoritative Kubernetes Schema Validation (Kubeconform)
+        run: |
+          # Strict JSON schema validation against official Kubernetes 1.30 schemas (zero cluster or kubeconfig dependency)
+          # -strict: Rejects manifests with undocumented or misspelled fields
+          # -summary: Displays clean tabular validation results
+          kubeconform -strict -summary -kubernetes-version 1.30.0 -schema-location default k8s/
+          # Explicit validation of secret template
+          kubeconform -strict -kubernetes-version 1.30.0 k8s/02-secret.yaml.example
+
+  # =========================================================================
+  # PUBLISHING PIPELINE: MULTI-ARCH DOCKER PUBLISHING
+  # (Strict Fail-Closed Barrier; Stale-Commit Guard; Failure-Aware Promotion)
+  # =========================================================================
+  publish-images:
+    name: "Docker Hub: Multi-Arch Build & Publish"
+    runs-on: ubuntu-latest
+    needs:
+      - frontend-gate
+      - backend-gate
+      - worker-gate
+      - manifest-gate
+    if: >-
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.frontend-gate.result == 'success' &&
+      needs.backend-gate.result == 'success' &&
+      needs.worker-gate.result == 'success' &&
+      needs.manifest-gate.result == 'success'
+    concurrency:
+      group: docker-hub-publish-main
+      queue: max
+      cancel-in-progress: false
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------------------------------
+      # STALE-COMMIT PUBLISHING GUARD
+      # Query GitHub API to verify this commit matches remote main HEAD.
+      # If a newer commit exists on main, skip all publishing steps.
+      # ---------------------------------------------------------------------
+      - name: Verify Commit Freshness Against Remote Main HEAD
+        id: freshness-check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          echo "Querying GitHub API for current HEAD commit of branch 'main' in ${REPOSITORY}..."
+
+          # Capture commit SHA strictly from stdout without combining stderr (no 2>&1).
+          # Any API error output streams directly to runner stderr unredirected.
+          if ! REMOTE_MAIN_SHA=$(gh api "repos/${REPOSITORY}/commits/main" --jq .sha); then
+            echo "::error::GitHub API request failed while querying branch 'main' HEAD in ${REPOSITORY}."
+            exit 1
+          fi
+
+          # Fail closed: reject empty response, literal 'null', or any non-40-char hex string
+          if [[ ! "${REMOTE_MAIN_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::GitHub API returned an invalid commit SHA for branch 'main': '${REMOTE_MAIN_SHA}'. Expected 40-character hexadecimal SHA."
+            exit 1
+          fi
+
+          echo "=========================================================="
+          echo "Workflow Trigger Commit SHA : ${WORKFLOW_SHA}"
+          echo "Current Remote main HEAD SHA: ${REMOTE_MAIN_SHA}"
+          echo "=========================================================="
+
+          echo "remote_head_sha=${REMOTE_MAIN_SHA}" >> "$GITHUB_OUTPUT"
+
+          if [ "${WORKFLOW_SHA}" != "${REMOTE_MAIN_SHA}" ]; then
+            echo "::warning title=Stale Commit Skipped::Workflow commit (${WORKFLOW_SHA}) is older than current remote main HEAD (${REMOTE_MAIN_SHA}). Skipping Docker build and publication to prevent out-of-order tag promotion."
+            echo "is_fresh=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Commit is fresh (matches remote main HEAD). Proceeding with Docker build and publication."
+            echo "is_fresh=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ---------------------------------------------------------------------
+      # FRONTEND BUILD ARGUMENT VALIDATION
+      # Fail fast if required Next.js public variables are missing.
+      # ---------------------------------------------------------------------
+      - name: Validate Frontend Build Variables
+        if: steps.freshness-check.outputs.is_fresh == 'true'
+        env:
+          API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          SOCKET_URL: ${{ vars.NEXT_PUBLIC_SOCKET_URL }}
+        run: |
+          echo "Validating frontend production build arguments..."
+          if [ -z "${API_URL}" ]; then
+            echo "::error::Repository variable NEXT_PUBLIC_API_URL is unset or empty."
+            exit 1
+          fi
+          if [ -z "${SOCKET_URL}" ]; then
+            echo "::error::Repository variable NEXT_PUBLIC_SOCKET_URL is unset or empty."
+            exit 1
+          fi
+          echo "✓ Frontend build variables verified."
+
+      # ---------------------------------------------------------------------
+      # DOCKER BUILD ENVIRONMENT SETUP
+      # Node 24 runtime actions (Runner >= v2.327.1 on ubuntu-latest)
+      # ---------------------------------------------------------------------
+      - name: Set up QEMU for Multi-Architecture Emulation
+        if: steps.freshness-check.outputs.is_fresh == 'true'
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx Builder Instance
+        if: steps.freshness-check.outputs.is_fresh == 'true'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Authenticate to Docker Hub
+        if: steps.freshness-check.outputs.is_fresh == 'true'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # ---------------------------------------------------------------------
+      # STAGE A: BUILD & PUSH IMMUTABLE SHA-TAGGED IMAGES
+      # ---------------------------------------------------------------------
+      - name: Stage A — Build & Push Frontend (sha-${{ github.sha }})
+        if: steps.freshness-check.outputs.is_fresh == 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: srujans22/queueless-frontend:sha-${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_SOCKET_URL=${{ vars.NEXT_PUBLIC_SOCKET_URL }}
+
+      - name: Stage A — Build & Push Backend (sha-${{ github.sha }})
+        if: steps.freshness-check.outputs.is_fresh == 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: srujans22/queueless-backend:sha-${{ github.sha }}
+
+      - name: Stage A — Build & Push Worker (sha-${{ github.sha }})
+        if: steps.freshness-check.outputs.is_fresh == 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./worker
+          file: ./worker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: srujans22/queueless-worker:sha-${{ github.sha }}
+
+      # ---------------------------------------------------------------------
+      # STAGE A PREFLIGHT: REMOTE MANIFEST VERIFICATION
+      # ---------------------------------------------------------------------
+      - name: Stage A Preflight — Inspect Multi-Arch Manifests on Docker Hub
+        if: steps.freshness-check.outputs.is_fresh == 'true'
+        run: |
+          IMAGES=(
+            "srujans22/queueless-frontend:sha-${{ github.sha }}"
+            "srujans22/queueless-backend:sha-${{ github.sha }}"
+            "srujans22/queueless-worker:sha-${{ github.sha }}"
+          )
+          for img in "${IMAGES[@]}"; do
+            echo "Verifying remote multi-arch manifest for ${img}..."
+            MANIFEST=$(docker buildx imagetools inspect --raw "${img}")
+            AMD64=$(echo "${MANIFEST}" | jq -e '.manifests[] | select(.platform.architecture == "amd64" and .platform.os == "linux")')
+            ARM64=$(echo "${MANIFEST}" | jq -e '.manifests[] | select(.platform.architecture == "arm64" and .platform.os == "linux")')
+            if [ -z "${AMD64}" ] || [ -z "${ARM64}" ]; then
+              echo "::error::Missing architecture manifest in ${img}. Required: linux/amd64, linux/arm64."
+              exit 1
+            fi
+            echo "✓ ${img} contains valid linux/amd64 and linux/arm64 manifests."
+          done
+
+      # ---------------------------------------------------------------------
+      # STAGE B: FAILURE-AWARE 'latest' POINTER PROMOTION (NON-ATOMIC)
+      # ---------------------------------------------------------------------
+      - name: Stage B — Promote latest Tags via Manifest Retagging (Non-Atomic)
+        if: steps.freshness-check.outputs.is_fresh == 'true'
+        env:
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          SERVICES=("queueless-frontend" "queueless-backend" "queueless-worker")
+          SUCCESSFUL=()
+          FAILED=()
+
+          echo "Beginning Stage B promotion for commit: sha-${WORKFLOW_SHA}..."
+
+          for svc in "${SERVICES[@]}"; do
+            echo "Promoting srujans22/${svc}:sha-${WORKFLOW_SHA} -> srujans22/${svc}:latest..."
+            if docker buildx imagetools create \
+                --tag "srujans22/${svc}:latest" \
+                "srujans22/${svc}:sha-${WORKFLOW_SHA}"; then
+              echo "✓ Successfully promoted srujans22/${svc}:latest"
+              SUCCESSFUL+=("${svc}")
+            else
+              echo "::error::Failed to promote srujans22/${svc}:latest pointer."
+              FAILED+=("${svc}")
+            fi
+          done
+
+          echo "=========================================================="
+          echo "STAGE B PROMOTION REPORT:"
+          for svc in "${SUCCESSFUL[@]}"; do
+            echo "  ✓ srujans22/${svc}:latest -> sha-${WORKFLOW_SHA} (PROMOTED)"
+          done
+          for svc in "${FAILED[@]}"; do
+            echo "  ✗ srujans22/${svc}:latest (FAILED)"
+          done
+          echo "=========================================================="
+
+          if [ ${#FAILED[@]} -gt 0 ]; then
+            if [ ${#SUCCESSFUL[@]} -gt 0 ]; then
+              echo "::error::PARTIAL PROMOTION DETECTED: ${#SUCCESSFUL[@]} succeeded, ${#FAILED[@]} failed."
+              echo "Due to registry lack of atomic cross-repo transactions, 'latest' tags are in an inconsistent state."
+              echo "Deployments must strictly reference immutable full-SHA tags (sha-${WORKFLOW_SHA}) and ignore 'latest'."
+            else
+              echo "::error::STAGE B PROMOTION FAILED: All ${#FAILED[@]} repository promotions failed."
+            fi
+            exit 1
+          else
+            echo "✓ All 3 repository latest pointers promoted successfully."
+          fi
+
+      # ---------------------------------------------------------------------
+      # OUTCOME REPORTING (TRI-STATE)
+      # ---------------------------------------------------------------------
+      - name: Report Publishing Outcome
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+          FRESHNESS_CONCLUSION: ${{ steps.freshness-check.conclusion }}
+          IS_FRESH: ${{ steps.freshness-check.outputs.is_fresh }}
+          TRIGGER_SHA: ${{ github.sha }}
+          REMOTE_HEAD_SHA: ${{ steps.freshness-check.outputs.remote_head_sha }}
+        run: |
+          echo "=========================================================="
+          if [ "${JOB_STATUS}" = "failure" ] || [ "${FRESHNESS_CONCLUSION}" = "failure" ]; then
+            echo "OUTCOME: PUBLISHING FAILED"
+            echo "Trigger Commit SHA: ${TRIGGER_SHA}"
+            echo "One or more required pipeline operations failed during execution."
+            echo "(e.g., API failure, build error, manifest verification error, or promotion failure)."
+            echo "Check preceding step logs for detailed diagnostics."
+            echo "=========================================================="
+            exit 1
+          elif [ "${IS_FRESH}" = "false" ]; then
+            echo "OUTCOME: PUBLISHING SKIPPED (STALE COMMIT DETECTED)"
+            echo "Workflow Trigger Commit SHA : ${TRIGGER_SHA}"
+            echo "Current Remote main HEAD SHA: ${REMOTE_HEAD_SHA}"
+            echo "A newer commit was already pushed to remote main before publishing began."
+            echo "Docker build, push, and tag promotions were safely skipped."
+            echo "Docker Hub tags were left untouched to protect 'latest'."
+            echo "=========================================================="
+          elif [ "${JOB_STATUS}" = "success" ] && [ "${IS_FRESH}" = "true" ]; then
+            echo "OUTCOME: PUBLISHING COMPLETED SUCCESSFULLY"
+            echo "Workflow Trigger Commit SHA : ${TRIGGER_SHA}"
+            echo "Remote main HEAD SHA       : ${REMOTE_HEAD_SHA}"
+            echo "All multi-architecture images (amd64/arm64) built and pushed:"
+            echo "  - srujans22/queueless-frontend:sha-${TRIGGER_SHA}"
+            echo "  - srujans22/queueless-backend:sha-${TRIGGER_SHA}"
+            echo "  - srujans22/queueless-worker:sha-${TRIGGER_SHA}"
+            echo "Latest pointers successfully updated across all three repositories."
+            echo "=========================================================="
+          else
+            echo "OUTCOME: PUBLISHING CANCELLED OR INCOMPLETE"
+            echo "Job status: ${JOB_STATUS}"
+            echo "=========================================================="
+            exit 1
+          fi

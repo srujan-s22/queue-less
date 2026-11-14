@@ -5,6 +5,9 @@ import {
   updateCanteenSettings,
   getAnalyticsDashboard,
   exportOrdersCsv,
+  getStaffRoster,
+  createStaffMember,
+  updateStaffStatus,
 } from '../services/adminService';
 import { sendSuccess } from '../utils/response';
 
@@ -58,6 +61,33 @@ export const exportCsv = async (_req: Request, res: Response, next: NextFunction
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="queueless-orders-export.csv"');
     return res.status(200).send(csvContent);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const listStaff = async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const roster = await getStaffRoster();
+    return sendSuccess(res, roster, 'Staff roster retrieved successfully');
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const createStaff = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const newStaff = await createStaffMember(req.body);
+    return sendSuccess(res, newStaff, 'Staff account created successfully', 201);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const changeStaffStatus = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const updated = await updateStaffStatus(req.params.id as string, req.body.status);
+    return sendSuccess(res, updated, 'Staff status updated successfully');
   } catch (error) {
     return next(error);
   }

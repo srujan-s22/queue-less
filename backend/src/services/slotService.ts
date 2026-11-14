@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { PickupSlot, IPickupSlot } from '../models';
 import { getISTMidnightUTC } from '../utils/timezone';
 import { ConflictError, NotFoundError } from '../utils/errors';
@@ -17,7 +18,8 @@ export const listPickupSlots = async (targetDate?: string) => {
 };
 
 export const getSlotById = async (id: string) => {
-  const slot = await PickupSlot.findById(id);
+  const query = mongoose.isValidObjectId(id) ? { _id: id } : { slotCode: id };
+  const slot = await PickupSlot.findOne(query);
   if (!slot) {
     throw new NotFoundError('Pickup slot not found.');
   }
@@ -25,9 +27,10 @@ export const getSlotById = async (id: string) => {
 };
 
 export const atomicReserveSlot = async (slotId: string): Promise<IPickupSlot> => {
+  const query = mongoose.isValidObjectId(slotId) ? { _id: slotId } : { slotCode: slotId };
   const reservedSlot = await PickupSlot.findOneAndUpdate(
     {
-      _id: slotId,
+      ...query,
       isActive: true,
       $expr: { $lt: ['$reservedCount', '$maxCapacity'] },
     },
@@ -46,7 +49,8 @@ export const atomicReserveSlot = async (slotId: string): Promise<IPickupSlot> =>
 
 export const atomicReleaseSlot = async (slotId: string | any): Promise<void> => {
   if (!slotId) return;
-  await PickupSlot.findByIdAndUpdate(slotId, {
+  const query = mongoose.isValidObjectId(slotId) ? { _id: slotId } : { slotCode: slotId };
+  await PickupSlot.findOneAndUpdate(query, {
     $inc: { reservedCount: -1 },
   });
 };
