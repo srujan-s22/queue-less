@@ -8,9 +8,11 @@ export interface RegisterDTO {
   name: string;
   email: string;
   password: string;
-  studentId: string;
+  role?: 'student' | 'staff' | 'admin';
+  studentId?: string;
   department?: string;
   phone?: string;
+  accessKey?: string;
 }
 
 export interface LoginDTO {
@@ -31,24 +33,48 @@ export const generateToken = (user: IUser): string => {
 };
 
 export const registerUser = async (data: RegisterDTO) => {
-  const existing = await User.findOne({ email: data.email.toLowerCase() });
+  const email = data.email.toLowerCase().trim();
+  const existing = await User.findOne({ email });
   if (existing) {
     throw new BadRequestError('An account with this email address already exists.');
   }
 
-  const existingRoll = await User.findOne({ studentId: data.studentId.trim() });
-  if (existingRoll) {
-    throw new BadRequestError('An account with this Student ID / Roll Number already exists.');
+  const requestedRole: UserRole = (data.role as UserRole) || 'student';
+
+  if (requestedRole === 'student') {
+    if (!data.studentId || !data.studentId.trim()) {
+      throw new BadRequestError('Student ID / Roll number is required for student registration.');
+    }
+    const existingRoll = await User.findOne({ studentId: data.studentId.trim() });
+    if (existingRoll) {
+      throw new BadRequestError('An account with this Student ID / Roll Number already exists.');
+    }
+  } else if (requestedRole === 'staff') {
+    if (!data.accessKey || !data.accessKey.trim()) {
+      throw new BadRequestError('Staff registration requires a valid staff access key.');
+    }
+    if (data.accessKey.trim() !== env.STAFF_ACCESS_KEY) {
+      throw new BadRequestError('Invalid staff access key.');
+    }
+  } else if (requestedRole === 'admin') {
+    if (!data.accessKey || !data.accessKey.trim()) {
+      throw new BadRequestError('Admin registration requires a valid admin access key.');
+    }
+    if (data.accessKey.trim() !== env.ADMIN_ACCESS_KEY) {
+      throw new BadRequestError('Invalid admin access key.');
+    }
+  } else {
+    throw new BadRequestError('Invalid registration role requested.');
   }
 
   const passwordHash = await bcrypt.hash(data.password, 10);
 
   const newUser = await User.create({
     name: data.name.trim(),
-    email: data.email.toLowerCase().trim(),
+    email,
     passwordHash,
-    role: 'student',
-    studentId: data.studentId.trim(),
+    role: requestedRole,
+    studentId: requestedRole === 'student' ? data.studentId!.trim() : (data.studentId?.trim() || undefined),
     department: data.department?.trim(),
     phone: data.phone?.trim(),
     walletBalance: 0,

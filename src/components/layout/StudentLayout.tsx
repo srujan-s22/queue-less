@@ -36,10 +36,10 @@ export const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && (!isAuthenticated || user?.role !== 'student')) {
       router.replace('/login');
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, user, router]);
 
   const navLinks = [
     { href: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },

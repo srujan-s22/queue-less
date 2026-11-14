@@ -47,6 +47,9 @@ k8s/02-secret.yaml
 *.tsbuildinfo
 next-env.d.ts
 
+# database backups
+/backups/
+
 /worker/node_modules
 /backend/node_modules
 /worker/dist

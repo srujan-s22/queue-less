@@ -8,6 +8,26 @@ import { registerSchema, loginSchema } from '../validators';
 const router = Router();
 
 router.post('/register', authRateLimiter, validateRequest(registerSchema), register);
+router.post(
+  '/register/staff',
+  authRateLimiter,
+  (req, _res, next) => {
+    req.body.role = 'staff';
+    next();
+  },
+  validateRequest(registerSchema),
+  register
+);
+router.post(
+  '/register/admin',
+  authRateLimiter,
+  (req, _res, next) => {
+    req.body.role = 'admin';
+    next();
+  },
+  validateRequest(registerSchema),
+  register
+);
 router.post('/login', authRateLimiter, validateRequest(loginSchema), login);
 router.post('/logout', logout);
 router.get('/me', authenticate, getMe);

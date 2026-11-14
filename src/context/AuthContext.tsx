@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from '@/types';
-import { MOCK_USERS } from '@/data/mockData';
 import { authApi } from '@/lib/api/services/authApi';
 import { RegisterRequest } from '@/lib/api/types';
 
@@ -10,7 +9,8 @@ interface AuthContextType {
   user: User;
   role: Role;
   switchRole: (role: Role) => Promise<void>;
-  login: (role: Role, email?: string, password?: string) => Promise<boolean>;
+  login: (roleOrEmail: Role | string, emailOrPassword?: string, maybePassword?: string) => Promise<User>;
+  register: (data: RegisterRequest) => Promise<User>;
   registerStudent: (data: RegisterRequest) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
@@ -21,15 +21,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const DEMO_CREDENTIALS: Record<Role, { email: string; password: string }> = {
-  student: { email: 'aarav.sharma@campus.edu', password: 'student123' },
-  staff: { email: 'ramesh.canteen@campus.edu', password: 'staff123' },
-  admin: { email: 'ananya.iyer@campus.edu', password: 'admin123' },
+const EMPTY_USER: User = {
+  id: '',
+  name: '',
+  email: '',
+  role: 'student',
+  walletBalance: 0,
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRole] = useState<Role>('student');
-  const [user, setUser] = useState<User>(MOCK_USERS.student);
+  const [user, setUser] = useState<User>(EMPTY_USER);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -38,14 +40,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const restoreSession = async () => {
       try {
         const currentUser = await authApi.getMe();
-        setUser(currentUser);
-        setRole(currentUser.role);
-        setIsAuthenticated(true);
+        if (currentUser && currentUser.id) {
+          setUser(currentUser);
+          setRole(currentUser.role);
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+          setUser(EMPTY_USER);
+        }
       } catch {
         // When session restoration fails (e.g. 401 unauthenticated), clear authenticated state.
-        // Never silently re-authenticate a user into a demo session!
         setIsAuthenticated(false);
-        setUser(MOCK_USERS.student);
+        setUser(EMPTY_USER);
         setRole('student');
       } finally {
         setIsLoading(false);
@@ -56,37 +62,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const switchRole = async (newRole: Role) => {
-    setIsLoading(true);
-    try {
-      const creds = DEMO_CREDENTIALS[newRole];
-      const realUser = await authApi.login(creds);
-      setUser(realUser);
-      setRole(realUser.role);
-      setIsAuthenticated(true);
-    } catch (err) {
-      console.warn(`[AuthContext] Backend login for ${newRole} failed, falling back to mock:`, err);
-      const mockProfile = MOCK_USERS[newRole];
-      setUser(mockProfile);
-      setRole(newRole);
-      setIsAuthenticated(true);
-    } finally {
-      setIsLoading(false);
-    }
+    // If not authenticated, simply switch role context for UI preview
+    setRole(newRole);
   };
 
-  const login = async (newRole: Role, email?: string, password?: string): Promise<boolean> => {
+  const login = async (
+    roleOrEmail: Role | string,
+    emailOrPassword?: string,
+    maybePassword?: string
+  ): Promise<User> => {
     setIsLoading(true);
     try {
-      const creds = {
-        email: email || DEMO_CREDENTIALS[newRole].email,
-        password: password || DEMO_CREDENTIALS[newRole].password,
-      };
+      let email = '';
+      let password = '';
 
-      const realUser = await authApi.login(creds);
+      if (maybePassword !== undefined) {
+        // Called as login(role, email, password)
+        email = emailOrPassword || '';
+        password = maybePassword || '';
+      } else {
+        // Called as login(email, password)
+        email = roleOrEmail;
+        password = emailOrPassword || '';
+      }
+
+      const realUser = await authApi.login({ email, password });
       setUser(realUser);
       setRole(realUser.role);
       setIsAuthenticated(true);
-      return true;
+      return realUser;
     } catch (error) {
       console.error('[AuthContext] Login failed:', error);
       throw error;
@@ -95,14 +99,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const registerStudent = async (data: RegisterRequest): Promise<boolean> => {
+  const register = async (data: RegisterRequest): Promise<User> => {
     setIsLoading(true);
     try {
       const newUser = await authApi.register(data);
       setUser(newUser);
-      setRole('student');
+      setRole(newUser.role);
       setIsAuthenticated(true);
-      return true;
+      return newUser;
     } catch (error) {
       console.error('[AuthContext] Registration failed:', error);
       throw error;
@@ -111,14 +115,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const registerStudent = async (data: RegisterRequest): Promise<boolean> => {
+    await register({ ...data, role: 'student' });
+    return true;
+  };
+
   const logout = async () => {
     try {
       await authApi.logout();
-    } catch {
-      // Ignore logout errors
+    } catch (err) {
+      console.warn('[AuthContext] Logout failed:', err);
     } finally {
       setIsAuthenticated(false);
-      setUser(MOCK_USERS.student);
+      setUser(EMPTY_USER);
       setRole('student');
     }
   };
@@ -151,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role,
         switchRole,
         login,
+        register,
         registerStudent,
         logout,
         updateUser,

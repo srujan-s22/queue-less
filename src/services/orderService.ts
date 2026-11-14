@@ -1,5 +1,4 @@
 import { Order, OrderStatus, OrderItem, PickupSlot, User } from '@/types';
-import { INITIAL_ORDERS } from '@/data/mockData';
 import { storage } from './storage';
 import { configService } from './configService';
 import { ordersApi } from '@/lib/api/services/ordersApi';
@@ -9,7 +8,7 @@ const ORDERS_STORAGE_KEY = 'orders_list';
 
 export const orderService = {
   getAll(): Order[] {
-    return storage.get<Order[]>(ORDERS_STORAGE_KEY, INITIAL_ORDERS);
+    return storage.get<Order[]>(ORDERS_STORAGE_KEY, []);
   },
 
   getById(id: string): Order | undefined {
@@ -208,6 +207,6 @@ export const orderService = {
   },
 
   resetDefaults(): void {
-    storage.set(ORDERS_STORAGE_KEY, INITIAL_ORDERS);
+    storage.set(ORDERS_STORAGE_KEY, []);
   },
 };
