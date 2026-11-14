@@ -84,6 +84,13 @@ jobs:
         working-directory: ./backend
         run: npm run build
 
+      - name: Seed Test Database
+        working-directory: ./backend
+        run: npm run seed
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/queueless_ci_test
+
       - name: Run Jest Integration Test Suite (43 Tests in 6 Suites)
         working-directory: ./backend
         run: npm test
