@@ -74,7 +74,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
   // Route protection
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || (user?.role !== 'staff' && user?.role !== 'admin'))) {
-      router.replace('/staff/login');
+      router.replace('/login');
     }
   }, [isLoading, isAuthenticated, user, router]);
 

@@ -14,8 +14,11 @@ describe('Background Worker — Late Fee Engine & Deadline Scanner', () => {
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
+    const testMongoUri =
+      process.env.TEST_MONGODB_URI ||
+      (env.MONGODB_URI.endsWith('/queueless') ? `${env.MONGODB_URI}_test` : env.MONGODB_URI);
     if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(env.MONGODB_URI);
+      await mongoose.connect(testMongoUri);
     }
 
     // Ensure CanteenSettings exists with late fee enabled

@@ -31,7 +31,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // Route protection
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || user?.role !== 'admin')) {
-      router.replace('/admin/login');
+      router.replace('/login');
     }
   }, [isLoading, isAuthenticated, user, router]);
 

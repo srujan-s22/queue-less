@@ -12,9 +12,11 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
-  studentId: string;
+  role?: Role;
+  studentId?: string;
   department?: string;
   phone?: string;
+  accessKey?: string;
 }
 
 export interface LoginRequest {

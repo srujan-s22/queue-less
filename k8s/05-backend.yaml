@@ -79,6 +79,16 @@ spec:
                 secretKeyRef:
                   name: queueless-secret
                   key: JWT_SECRET
+            - name: STAFF_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: queueless-secret
+                  key: STAFF_ACCESS_KEY
+            - name: ADMIN_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: queueless-secret
+                  key: ADMIN_ACCESS_KEY
           resources:
             requests:
               cpu: 100m

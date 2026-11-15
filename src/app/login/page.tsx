@@ -6,53 +6,55 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui/Button';
-import { UtensilsCrossed, ArrowRight, GraduationCap, ChefHat, ShieldCheck } from 'lucide-react';
-import { Role } from '@/types';
+import { UtensilsCrossed, ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const { showToast } = useToast();
 
-  const [email, setEmail] = useState('aarav.sharma@campus.edu');
-  const [password, setPassword] = useState('student123');
-  const [selectedRole, setSelectedRole] = useState<Role>('student');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleRoleQuickSelect = (role: Role) => {
-    setSelectedRole(role);
-    if (role === 'student') {
-      setEmail('aarav.sharma@campus.edu');
-      setPassword('student123');
-    } else if (role === 'staff') {
-      setEmail('ramesh.canteen@campus.edu');
-      setPassword('staff123');
-    } else {
-      setEmail('ananya.iyer@campus.edu');
-      setPassword('admin123');
-    }
-  };
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage('');
+
+    if (!email.trim() || !password) {
+      setErrorMessage('Please enter both email and password.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await login(selectedRole, email, password);
+      const user = await login(email.trim(), password);
       showToast({
         type: 'success',
-        title: `Logged in as ${selectedRole.toUpperCase()}`,
-        message: `Welcome to QueueLess platform.`,
+        title: 'Sign In Successful',
+        message: `Welcome back, ${user.name}!`,
       });
 
-      if (selectedRole === 'student') router.push('/student/dashboard');
-      else if (selectedRole === 'staff') router.push('/staff/dashboard');
-      else router.push('/admin/dashboard');
+      // Role-based dashboard routing
+      if (user.role === 'student') {
+        router.push('/student/dashboard');
+      } else if (user.role === 'staff') {
+        router.push('/staff/dashboard');
+      } else if (user.role === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/student/dashboard');
+      }
     } catch (error: any) {
+      const msg = error.message || 'Invalid email or password. Please try again.';
+      setErrorMessage(msg);
       showToast({
         type: 'error',
-        title: 'Login Failed',
-        message: error.message || 'Invalid email or password.',
+        title: 'Sign In Failed',
+        message: msg,
       });
     } finally {
       setIsLoading(false);
@@ -71,87 +73,68 @@ export default function LoginPage() {
           </span>
         </Link>
         <h1 className="text-xl font-bold tracking-tight text-[#252525] mt-2">
-          Sign In to Your Campus Portal
+          Sign In to QueueLess
         </h1>
         <p className="mt-1 text-xs text-[#737373]">
-          Order during class • Pick up during break • Skip the queue
+          Unified campus portal for Students, Kitchen Staff, and Administrators
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
         <div className="bg-white py-8 px-6 sm:px-10 rounded-2xl border border-[#E5E7EB] shadow-2xs space-y-6">
-          {/* Quick Role Switcher Tabs */}
-          <div>
-            <label className="block text-xs font-semibold text-[#252525] mb-2 text-center">
-              Select Demo Role Profile
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleRoleQuickSelect('student')}
-                className={`py-2 px-1 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
-                  selectedRole === 'student'
-                    ? 'bg-[#252525] text-white border-[#252525]'
-                    : 'bg-[#EDEDEB] text-[#737373] border-transparent hover:bg-[#E5E7EB]'
-                }`}
-              >
-                <GraduationCap className="w-4 h-4" />
-                <span>Student</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleRoleQuickSelect('staff')}
-                className={`py-2 px-1 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
-                  selectedRole === 'staff'
-                    ? 'bg-[#252525] text-white border-[#252525]'
-                    : 'bg-[#EDEDEB] text-[#737373] border-transparent hover:bg-[#E5E7EB]'
-                }`}
-              >
-                <ChefHat className="w-4 h-4" />
-                <span>Staff</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleRoleQuickSelect('admin')}
-                className={`py-2 px-1 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
-                  selectedRole === 'admin'
-                    ? 'bg-[#252525] text-white border-[#252525]'
-                    : 'bg-[#EDEDEB] text-[#737373] border-transparent hover:bg-[#E5E7EB]'
-                }`}
-              >
-                <ShieldCheck className="w-4 h-4" />
-                <span>Admin</span>
-              </button>
+          {errorMessage && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+              {errorMessage}
             </div>
-          </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-[#252525] mb-1.5">
                 Campus Email Address
               </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E5E7EB] focus:outline-none focus:border-[#252525] text-[#252525]"
-              />
+              <div className="relative">
+                <input
+                  type="email"
+                  required
+                  placeholder="name@campus.edu"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  className="w-full text-xs pl-9 pr-3.5 py-2.5 rounded-xl border border-[#E5E7EB] focus:outline-none focus:border-[#252525] text-[#252525]"
+                />
+                <Mail className="w-4 h-4 text-[#737373] absolute left-3 top-3 pointer-events-none" />
+              </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-[#252525] mb-1.5">
                 Password
               </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E5E7EB] focus:outline-none focus:border-[#252525] text-[#252525]"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  className="w-full text-xs pl-9 pr-10 py-2.5 rounded-xl border border-[#E5E7EB] focus:outline-none focus:border-[#252525] text-[#252525]"
+                />
+                <Lock className="w-4 h-4 text-[#737373] absolute left-3 top-3 pointer-events-none" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-2.5 text-[#737373] hover:text-[#252525] focus:outline-none"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <Button
@@ -162,12 +145,12 @@ export default function LoginPage() {
               className="w-full"
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              Sign In as {selectedRole.toUpperCase()}
+              Sign In
             </Button>
           </form>
 
-          <div className="pt-2 text-center text-xs text-[#737373]">
-            <span>New student on campus? </span>
+          <div className="pt-2 text-center text-xs text-[#737373] border-t border-[#F0F0F0]">
+            <span>Don&apos;t have an account? </span>
             <Link
               href="/register"
               className="font-semibold text-[#252525] hover:underline"
