@@ -20,12 +20,13 @@ services:
     restart: unless-stopped
     ports:
       - "5001:5001"
+    env_file:
+      - path: ./backend/.env
+        required: false
     environment:
       PORT: 5001
       NODE_ENV: production
       MONGODB_URI: mongodb://mongo:27017/queueless
-      # Fails fast at Compose launch if JWT_SECRET is unset or empty in .env
-      JWT_SECRET: "${JWT_SECRET:?FATAL: JWT_SECRET must be set in your root .env file before launching QueueLess.}"
       JWT_EXPIRES_IN: 24h
       CLIENT_URL: http://localhost:3000,http://127.0.0.1:3000
     depends_on:
