@@ -1,6 +1,7 @@
 import { API_BASE_URL } from './endpoints';
 import { ApiError } from './errors';
 import { ApiResponse } from './types';
+import { getAuthToken, clearAuthToken } from './token';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -30,6 +31,11 @@ export const apiClient = async <T = any>(
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+
+  const token = getAuthToken();
+  if (token) {
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
 
   const config: RequestInit = {
     method: 'GET',
@@ -61,6 +67,9 @@ export const apiClient = async <T = any>(
     }));
 
     if (!response.ok || data.success === false) {
+      if (response.status === 401) {
+        clearAuthToken();
+      }
       throw new ApiError(
         data.message || `Request failed with HTTP status ${response.status}`,
         response.status,

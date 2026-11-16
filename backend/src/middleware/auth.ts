@@ -51,6 +51,7 @@ export const authenticate = async (req: Request, _res: Response, next: NextFunct
       name: user.name,
       studentId: user.studentId,
     };
+    (req as any).token = token;
 
     return next();
   } catch (error: any) {
@@ -87,6 +88,7 @@ export const optionalAuth = async (req: Request, _res: Response, next: NextFunct
         name: user.name,
         studentId: user.studentId,
       };
+      (req as any).token = token;
     }
     return next();
   } catch {

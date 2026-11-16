@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../api/endpoints';
+import { getAuthToken } from '../api/token';
 
 let socketInstance: Socket | null = null;
 
@@ -10,8 +11,10 @@ export const getSocket = (): Socket => {
   }
 
   if (!socketInstance) {
+    const token = getAuthToken();
     socketInstance = io(SOCKET_URL, {
       withCredentials: true,
+      auth: token ? { token } : undefined,
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 10,
@@ -34,6 +37,28 @@ export const getSocket = (): Socket => {
   }
 
   return socketInstance;
+};
+
+export const updateSocketAuth = (token: string | null): void => {
+  if (typeof window === 'undefined') return;
+
+  if (socketInstance) {
+    socketInstance.auth = token ? { token } : {};
+    if (socketInstance.connected) {
+      socketInstance.disconnect().connect();
+    }
+  } else if (token) {
+    getSocket();
+  }
+};
+
+export const disconnectSocket = (): void => {
+  if (typeof window === 'undefined') return;
+
+  if (socketInstance) {
+    socketInstance.disconnect();
+    socketInstance = null;
+  }
 };
 
 export const joinOrderRoom = (orderId: string): void => {

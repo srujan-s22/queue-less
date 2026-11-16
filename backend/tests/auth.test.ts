@@ -1,8 +1,12 @@
+import { createServer } from 'http';
+import { AddressInfo } from 'net';
 import request from 'supertest';
+import { io as Client } from 'socket.io-client';
 import { createApp } from '../src/app';
 import { setupTestDb } from './setup';
-import { User } from '../src/models';
+import { User, Order, PickupSlot, MenuItem } from '../src/models';
 import { env } from '../src/config/env';
+import { initSocket } from '../src/socket';
 
 setupTestDb();
 
@@ -439,6 +443,177 @@ describe('QueueLess Comprehensive Authentication & Role-Based Access Tests', () 
       const cookies = res.headers['set-cookie'];
       expect(cookies).toBeDefined();
       expect(cookies[0]).toMatch(/token=;/);
+    });
+  });
+
+  // =========================================================================
+  // 6. DUAL-STRATEGY AUTHENTICATION & CROSS-ORIGIN BEARER FALLBACK
+  // =========================================================================
+  describe('Dual-Strategy Authentication & Cross-Origin Bearer Fallback', () => {
+    let testOrderId = '';
+
+    afterAll(async () => {
+      if (testOrderId) {
+        await Order.findByIdAndDelete(testOrderId);
+      }
+    });
+
+    it('should return token in response body and set cookie on login', async () => {
+      const res = await request(app)
+        .post('/api/v1/auth/login')
+        .send({
+          email: studentEmail,
+          password: 'studentPassword123',
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.token).toBeDefined();
+      expect(typeof res.body.data.token).toBe('string');
+      expect(res.headers['set-cookie']).toBeDefined();
+    });
+
+    it('should restore session via GET /auth/me using Bearer token without cookies and return user profile without echoing token', async () => {
+      const res = await request(app)
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${studentToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.email).toBe(studentEmail);
+      expect(res.body.data.role).toBe('student');
+      expect(res.body.data.token).toBeUndefined();
+    });
+
+    it('should allow session restoration via GET /auth/me using cookie without Bearer header and return profile without leaking token', async () => {
+      const loginRes = await request(app)
+        .post('/api/v1/auth/login')
+        .send({
+          email: studentEmail,
+          password: 'studentPassword123',
+        });
+
+      const cookieHeader = loginRes.headers['set-cookie'];
+      expect(cookieHeader).toBeDefined();
+
+      const res = await request(app)
+        .get('/api/v1/auth/me')
+        .set('Cookie', cookieHeader);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.email).toBe(studentEmail);
+      expect(res.body.data.token).toBeUndefined();
+    });
+
+    it('should successfully place pre-order using Authorization Bearer token in cross-origin mode (no cookies)', async () => {
+      let slot = await PickupSlot.findOne({ isActive: true });
+      if (!slot) {
+        slot = await PickupSlot.create({
+          slotNumber: 1,
+          label: '12:00 PM - 12:30 PM',
+          startTime: '12:00',
+          endTime: '12:30',
+          maxCapacity: 50,
+          reservedCount: 0,
+          isActive: true,
+        });
+      }
+
+      let item = await MenuItem.findOne({ isAvailable: true });
+      if (!item) {
+        item = await MenuItem.create({
+          name: 'Masala Dosa',
+          description: 'Crispy rice crepe filled with spiced potato masala',
+          price: 60,
+          category: 'breakfast',
+          dietary: 'veg',
+          prepTimeMinutes: 10,
+          imageUrl: 'https://images.unsplash.com/photo-test',
+          isAvailable: true,
+        });
+      }
+
+      const res = await request(app)
+        .post('/api/v1/orders')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({
+          pickupSlotId: slot._id.toString(),
+          items: [{ menuItemId: item._id.toString(), quantity: 1 }],
+          paymentMethod: 'counter_cash',
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.orderNumber).toBeDefined();
+      expect(res.body.data.tokenNumber).toBeDefined();
+      testOrderId = res.body.data._id;
+    });
+
+    it('should reject pre-order checkout with 401 when authentication token is missing', async () => {
+      let slot = await PickupSlot.findOne({ isActive: true });
+      let item = await MenuItem.findOne({ isAvailable: true });
+
+      const res = await request(app)
+        .post('/api/v1/orders')
+        .send({
+          pickupSlotId: slot ? slot._id.toString() : '507f1f77bcf86cd799439011',
+          items: [{ menuItemId: item ? item._id.toString() : '507f1f77bcf86cd799439012', quantity: 1 }],
+          paymentMethod: 'counter_cash',
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toMatch(/Authentication token missing\. Please sign in\./i);
+    });
+
+    it('should reject pre-order checkout with 401 when token is invalid or expired', async () => {
+      let slot = await PickupSlot.findOne({ isActive: true });
+      let item = await MenuItem.findOne({ isAvailable: true });
+
+      const res = await request(app)
+        .post('/api/v1/orders')
+        .set('Authorization', 'Bearer invalid.jwt.token.here')
+        .send({
+          pickupSlotId: slot ? slot._id.toString() : '507f1f77bcf86cd799439011',
+          items: [{ menuItemId: item ? item._id.toString() : '507f1f77bcf86cd799439012', quantity: 1 }],
+          paymentMethod: 'counter_cash',
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toMatch(/Invalid or expired authentication session\./i);
+    });
+
+    it('should authenticate incoming Socket.IO connection via handshake auth token', async () => {
+      const httpServer = createServer(app);
+      const ioServer = initSocket(httpServer);
+
+      await new Promise<void>((resolve) => httpServer.listen(0, resolve));
+      const port = (httpServer.address() as AddressInfo).port;
+
+      const clientSocket = Client(`http://localhost:${port}`, {
+        auth: { token: studentToken },
+        transports: ['websocket'],
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        clientSocket.on('connect', () => {
+          resolve();
+        });
+        clientSocket.on('connect_error', (err) => {
+          reject(err);
+        });
+      });
+
+      expect(clientSocket.connected).toBe(true);
+
+      clientSocket.disconnect();
+      await new Promise<void>((resolve) => {
+        ioServer.close(() => {
+          httpServer.close(() => resolve());
+        });
+      });
     });
   });
 });

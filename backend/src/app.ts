@@ -20,16 +20,23 @@ export const createApp = (): Application => {
 
   // 2. CORS Configuration
   const configuredOrigins = env.CLIENT_URL
-    ? env.CLIENT_URL.split(',').map((u) => u.trim())
+    ? env.CLIENT_URL.split(',').map((u) => u.trim().replace(/\/+$/, ''))
     : [];
-  const defaultDevOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'];
-  const allowedOrigins = Array.from(new Set([...configuredOrigins, ...defaultDevOrigins]));
+  const defaultOrigins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    'https://queueless-frontend-murex.vercel.app',
+  ];
+  const allowedOrigins = Array.from(new Set([...configuredOrigins, ...defaultOrigins]));
 
   app.use(
     cors({
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, curl, Postman)
-        if (!origin || allowedOrigins.includes(origin)) {
+        const normalizedOrigin = origin ? origin.replace(/\/+$/, '') : '';
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes(normalizedOrigin)) {
           return callback(null, true);
         }
         if (env.IS_PRODUCTION) {

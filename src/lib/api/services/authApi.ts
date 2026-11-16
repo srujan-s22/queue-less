@@ -9,6 +9,7 @@ import {
 } from '../types';
 import { adaptUser } from '../adapters';
 import { User } from '@/types';
+import { setAuthToken, clearAuthToken } from '../token';
 
 export const authApi = {
   login: async (credentials: LoginRequest): Promise<User> => {
@@ -16,6 +17,9 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
+    if (res.data?.token) {
+      setAuthToken(res.data.token);
+    }
     return adaptUser(res.data.user);
   },
 
@@ -24,13 +28,20 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    if (res.data?.token) {
+      setAuthToken(res.data.token);
+    }
     return adaptUser(res.data.user);
   },
 
   logout: async (): Promise<void> => {
-    await apiClient(ENDPOINTS.AUTH.LOGOUT, {
-      method: 'POST',
-    });
+    try {
+      await apiClient(ENDPOINTS.AUTH.LOGOUT, {
+        method: 'POST',
+      });
+    } finally {
+      clearAuthToken();
+    }
   },
 
   getMe: async (): Promise<User> => {

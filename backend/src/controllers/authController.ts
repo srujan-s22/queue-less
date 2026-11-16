@@ -9,17 +9,25 @@ import {
 import { sendSuccess } from '../utils/response';
 import { env } from '../config/env';
 
-const COOKIE_OPTIONS = {
+const getCookieOptions = () => ({
   httpOnly: true,
   secure: env.IS_PRODUCTION,
-  sameSite: 'lax' as const,
+  sameSite: env.IS_PRODUCTION ? ('none' as const) : ('lax' as const),
+  path: '/',
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
-};
+});
+
+const getClearCookieOptions = () => ({
+  httpOnly: true,
+  secure: env.IS_PRODUCTION,
+  sameSite: env.IS_PRODUCTION ? ('none' as const) : ('lax' as const),
+  path: '/',
+});
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { user, token } = await registerUser(req.body);
-    res.cookie('token', token, COOKIE_OPTIONS);
+    res.cookie('token', token, getCookieOptions());
     return sendSuccess(res, { user, token }, 'Registration successful', 201);
   } catch (error) {
     return next(error);
@@ -29,7 +37,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { user, token } = await loginUser(req.body);
-    res.cookie('token', token, COOKIE_OPTIONS);
+    res.cookie('token', token, getCookieOptions());
     return sendSuccess(res, { user, token }, 'Login successful');
   } catch (error) {
     return next(error);
@@ -37,7 +45,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 };
 
 export const logout = async (_req: Request, res: Response) => {
-  res.clearCookie('token');
+  res.clearCookie('token', getClearCookieOptions());
   return sendSuccess(res, null, 'Logged out successfully');
 };
 

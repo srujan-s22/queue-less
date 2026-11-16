@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from '@/types';
 import { authApi } from '@/lib/api/services/authApi';
 import { RegisterRequest } from '@/lib/api/types';
+import { getAuthToken, clearAuthToken } from '@/lib/api/token';
+import { updateSocketAuth, disconnectSocket } from '@/lib/socket/socketClient';
 
 interface AuthContextType {
   user: User;
@@ -35,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Restore authenticated session from backend cookie on initial load
+  // Restore authenticated session from backend cookie or stored token on initial load
   useEffect(() => {
     const restoreSession = async () => {
       try {
@@ -44,15 +46,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentUser);
           setRole(currentUser.role);
           setIsAuthenticated(true);
+          updateSocketAuth(getAuthToken());
         } else {
           setIsAuthenticated(false);
           setUser(EMPTY_USER);
+          clearAuthToken();
+          disconnectSocket();
         }
       } catch {
         // When session restoration fails (e.g. 401 unauthenticated), clear authenticated state.
         setIsAuthenticated(false);
         setUser(EMPTY_USER);
         setRole('student');
+        clearAuthToken();
+        disconnectSocket();
       } finally {
         setIsLoading(false);
       }
@@ -90,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(realUser);
       setRole(realUser.role);
       setIsAuthenticated(true);
+      updateSocketAuth(getAuthToken());
       return realUser;
     } catch (error) {
       console.error('[AuthContext] Login failed:', error);
@@ -106,6 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(newUser);
       setRole(newUser.role);
       setIsAuthenticated(true);
+      updateSocketAuth(getAuthToken());
       return newUser;
     } catch (error) {
       console.error('[AuthContext] Registration failed:', error);
@@ -126,6 +135,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('[AuthContext] Logout failed:', err);
     } finally {
+      clearAuthToken();
+      disconnectSocket();
       setIsAuthenticated(false);
       setUser(EMPTY_USER);
       setRole('student');
