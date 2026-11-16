@@ -6,6 +6,7 @@ import {
   updateItem,
   toggleAvailability,
   removeItem,
+  seedMenu,
 } from '../controllers/menuController';
 import { authenticate } from '../middleware/auth';
 import { authorize } from '../middleware/role';
@@ -19,6 +20,7 @@ import {
 const router = Router();
 
 router.get('/', getMenu);
+router.post('/seed', authenticate, authorize('admin'), seedMenu);
 router.get('/:id', getMenuItem);
 router.post('/', authenticate, authorize('admin'), validateRequest(createMenuItemSchema), createItem);
 router.put('/:id', authenticate, authorize('admin'), validateRequest(updateMenuItemSchema), updateItem);

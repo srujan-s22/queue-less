@@ -1,6 +1,7 @@
 import { MenuItem, IMenuItem } from '../models';
 import { NotFoundError } from '../utils/errors';
 import { socketEmitter } from '../socket/emitter';
+import { CANONICAL_MENU_ITEMS } from '../config/menuDefaults';
 
 export interface MenuFilterOptions {
   category?: string;
@@ -9,7 +10,37 @@ export interface MenuFilterOptions {
   availableOnly?: boolean;
 }
 
+export const ensureDefaultMenuItems = async (): Promise<IMenuItem[]> => {
+  const count = await MenuItem.countDocuments({ isArchived: false });
+  if (count === 0) {
+    for (const item of CANONICAL_MENU_ITEMS) {
+      await MenuItem.findOneAndUpdate(
+        { name: item.name },
+        { ...item, isArchived: false },
+        { upsert: true, new: true }
+      );
+    }
+  }
+  return MenuItem.find({ isArchived: false }).sort({ isAvailable: -1, rating: -1, name: 1 });
+};
+
+export const seedDefaultMenuItems = async (): Promise<IMenuItem[]> => {
+  for (const item of CANONICAL_MENU_ITEMS) {
+    await MenuItem.findOneAndUpdate(
+      { name: item.name },
+      { ...item, isArchived: false },
+      { upsert: true, new: true }
+    );
+  }
+  return MenuItem.find({ isArchived: false }).sort({ isAvailable: -1, rating: -1, name: 1 });
+};
+
 export const listMenuItems = async (filters: MenuFilterOptions = {}) => {
+  const activeCount = await MenuItem.countDocuments({ isArchived: false });
+  if (activeCount === 0) {
+    await ensureDefaultMenuItems();
+  }
+
   const query: any = { isArchived: false };
 
   if (filters.category && filters.category !== 'all') {

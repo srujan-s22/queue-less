@@ -105,4 +105,37 @@ describe('Menu Catalog & Inventory Endpoints', () => {
     // Clean up
     await MenuItem.findByIdAndDelete(res.body.data._id);
   });
+
+  it('should allow admin to seed default canonical menu items via POST /api/v1/menu/seed', async () => {
+    const res = await request(app)
+      .post('/api/v1/menu/seed')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(12);
+  });
+
+  it('should forbid student from accessing POST /api/v1/menu/seed', async () => {
+    const res = await request(app)
+      .post('/api/v1/menu/seed')
+      .set('Authorization', `Bearer ${studentToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('should self-heal empty menu collection on GET /api/v1/menu', async () => {
+    // Temporarily archive all items to simulate empty collection
+    await MenuItem.updateMany({}, { $set: { isArchived: true } });
+
+    const res = await request(app).get('/api/v1/menu');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.length).toBe(12);
+
+    // Verify database was self-healed
+    const activeCount = await MenuItem.countDocuments({ isArchived: false });
+    expect(activeCount).toBe(12);
+  });
 });

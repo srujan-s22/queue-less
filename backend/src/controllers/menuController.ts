@@ -6,6 +6,7 @@ import {
   updateMenuItem,
   toggleItemAvailability,
   archiveMenuItem,
+  seedDefaultMenuItems,
 } from '../services/menuService';
 import { sendSuccess } from '../utils/response';
 
@@ -64,6 +65,15 @@ export const removeItem = async (req: Request, res: Response, next: NextFunction
   try {
     const result = await archiveMenuItem(req.params.id as string);
     return sendSuccess(res, result);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const seedMenu = async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const items = await seedDefaultMenuItems();
+    return sendSuccess(res, items, 'Menu items refreshed to canonical catalog', 201);
   } catch (error) {
     return next(error);
   }

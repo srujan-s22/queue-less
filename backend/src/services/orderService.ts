@@ -9,6 +9,8 @@ import {
   OrderStatusHistory,
 } from '../models';
 import { atomicReserveSlot, atomicReleaseSlot } from './slotService';
+import { ensureDefaultMenuItems } from './menuService';
+import { LEGACY_MOCK_MENU_MAP } from '../config/menuDefaults';
 import { addMinutes } from '../utils/timezone';
 import { socketEmitter } from '../socket/emitter';
 import {
@@ -65,6 +67,12 @@ export const createOrder = async (
 
   try {
     // 4. Validate menu items and calculate true server prices
+    // Ensure active menu items exist in database
+    const activeCount = await MenuItem.countDocuments({ isArchived: false });
+    if (activeCount === 0) {
+      await ensureDefaultMenuItems();
+    }
+
     const itemIds = dto.items.map((i) => i.menuItemId);
     const validObjectIds = itemIds.filter((id) => mongoose.isValidObjectId(id));
     const nonObjectIds = itemIds.filter((id) => !mongoose.isValidObjectId(id));
@@ -76,15 +84,38 @@ export const createOrder = async (
     const dbItemMap = new Map<string, any>();
     dbMenuItems.forEach((item) => dbItemMap.set(item._id.toString(), item));
 
-    // Support legacy mock IDs (e.g. "menu_01") mapped to seeded items
+    // Support legacy mock IDs (e.g. "menu_04" -> "Punjabi Chole Bhature") mapped reliably by name
     if (nonObjectIds.length > 0) {
-      const allActive = await MenuItem.find({ isArchived: false }).sort({ createdAt: 1 });
       for (const nonId of nonObjectIds) {
-        if (nonId.startsWith('menu_')) {
+        let matchedDish: any = null;
+
+        // 1. Check legacy mock ID map (exact canonical mapping)
+        if (LEGACY_MOCK_MENU_MAP[nonId]) {
+          matchedDish = await MenuItem.findOne({
+            name: LEGACY_MOCK_MENU_MAP[nonId],
+            isArchived: false,
+          });
+        }
+
+        // 2. Fallback to direct dish name match
+        if (!matchedDish) {
+          matchedDish = await MenuItem.findOne({
+            name: { $regex: new RegExp(`^${nonId}$`, 'i') },
+            isArchived: false,
+          });
+        }
+
+        // 3. Fallback to index if within bounds
+        if (!matchedDish && nonId.startsWith('menu_')) {
           const idx = parseInt(nonId.replace('menu_', ''), 10) - 1;
+          const allActive = await MenuItem.find({ isArchived: false }).sort({ createdAt: 1 });
           if (idx >= 0 && idx < allActive.length) {
-            dbItemMap.set(nonId, allActive[idx]);
+            matchedDish = allActive[idx];
           }
+        }
+
+        if (matchedDish) {
+          dbItemMap.set(nonId, matchedDish);
         }
       }
     }
@@ -95,7 +126,9 @@ export const createOrder = async (
     for (const itemInput of dto.items) {
       const dbItem = dbItemMap.get(itemInput.menuItemId);
       if (!dbItem) {
-        throw new BadRequestError(`Dish '${itemInput.menuItemId}' does not exist.`);
+        throw new BadRequestError(
+          `Dish '${itemInput.menuItemId}' does not exist or has been removed. Please refresh the menu and update your cart.`
+        );
       }
       if (!dbItem.isAvailable) {
         throw new ConflictError(`'${dbItem.name}' is currently sold out (Item 86).`);

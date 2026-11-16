@@ -4,11 +4,13 @@ import { connectDatabase, disconnectDatabase } from './config/db';
 import { env } from './config/env';
 import { logger } from './config/logger';
 import { initSocket } from './socket';
+import { ensureDefaultMenuItems } from './services/menuService';
 
 const startServer = async () => {
   try {
-    // 1. Connect to Database
+    // 1. Connect to Database & Ensure Menu
     await connectDatabase();
+    await ensureDefaultMenuItems();
 
     // 2. Initialize Express Application
     const app = createApp();

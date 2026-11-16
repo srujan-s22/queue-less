@@ -103,10 +103,17 @@ export const orderService = {
     const idempotencyKey = `idem-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
     // Submit order directly to authoritative backend — DO NOT mask or simulate failures!
+    const backendPaymentMethod =
+      params.paymentMethod === 'campus_wallet'
+        ? 'campus_wallet'
+        : params.paymentMethod === 'upi'
+        ? 'upi'
+        : 'counter_cash';
+
     const backendOrder = await ordersApi.createOrder(
       {
         pickupSlotId: params.pickupSlot.id,
-        paymentMethod: 'counter_cash',
+        paymentMethod: backendPaymentMethod,
         items: params.items.map((i) => ({
           menuItemId: i.menuItem.id,
           quantity: i.quantity,
