@@ -1,6 +1,7 @@
 import { Order, OrderStatus, OrderItem, PickupSlot, User } from '@/types';
 import { storage } from './storage';
 import { configService } from './configService';
+import { menuService } from './menuService';
 import { ordersApi } from '@/lib/api/services/ordersApi';
 import { staffApi } from '@/lib/api/services/staffApi';
 
@@ -110,15 +111,40 @@ export const orderService = {
         ? 'upi'
         : 'counter_cash';
 
+    // 1. Reconcile item IDs with live backend menu to guarantee valid MongoDB ObjectIds are submitted
+    let liveMenu = menuService.getAll();
+    if (!liveMenu || liveMenu.length === 0 || liveMenu.some((m) => m.id.startsWith('menu_'))) {
+      try {
+        liveMenu = await menuService.fetchMenuItems();
+      } catch (err) {
+        console.warn('[orderService] Failed to fetch live menu before checkout:', err);
+      }
+    }
+
+    const payloadItems = params.items.map((i) => {
+      let menuItemId = i.menuItem.id;
+      if (menuItemId.startsWith('menu_') || !/^[0-9a-fA-F]{24}$/.test(menuItemId)) {
+        const liveMatch = liveMenu.find(
+          (m) =>
+            m.name.toLowerCase() === i.menuItem.name.toLowerCase() &&
+            /^[0-9a-fA-F]{24}$/.test(m.id)
+        );
+        if (liveMatch) {
+          menuItemId = liveMatch.id;
+        }
+      }
+      return {
+        menuItemId,
+        quantity: i.quantity,
+        selectedAddons: [],
+      };
+    });
+
     const backendOrder = await ordersApi.createOrder(
       {
         pickupSlotId: params.pickupSlot.id,
         paymentMethod: backendPaymentMethod,
-        items: params.items.map((i) => ({
-          menuItemId: i.menuItem.id,
-          quantity: i.quantity,
-          selectedAddons: [],
-        })),
+        items: payloadItems,
       },
       idempotencyKey
     );

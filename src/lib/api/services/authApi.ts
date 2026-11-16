@@ -58,10 +58,10 @@ export const authApi = {
   },
 
   topupWallet: async (amount: number, idempotencyKey?: string): Promise<{ walletBalance: number }> => {
-    const headers: Record<string, string> = {};
-    if (idempotencyKey) {
-      headers['Idempotency-Key'] = idempotencyKey;
-    }
+    const key = idempotencyKey || `topup-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    const headers: Record<string, string> = {
+      'Idempotency-Key': key,
+    };
     const res = await apiClient<{ walletBalance: number }>(ENDPOINTS.USERS.WALLET_TOPUP, {
       method: 'POST',
       headers,

@@ -39,9 +39,8 @@ export default function StudentProfilePage() {
   const handleTopupWallet = async (amount: number) => {
     if (isToppingUp) return;
     setIsToppingUp(true);
-    const idempotencyKey = `topup-${user.id || 'anon'}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     try {
-      const newBalance = await topupWallet(amount, idempotencyKey);
+      const newBalance = await topupWallet(amount);
       showToast({
         type: 'success',
         title: `₹${amount} Added to Wallet`,

@@ -24,8 +24,15 @@ export const menuService = {
   async fetchMenuItems(filters: MenuFilterParams = {}): Promise<MenuItem[]> {
     try {
       const items = await menuApi.getMenu(filters);
-      if (items && items.length > 0) {
-        storage.set(MENU_STORAGE_KEY, items);
+      if (items && Array.isArray(items)) {
+        if (items.length > 0) {
+          storage.set(MENU_STORAGE_KEY, items);
+          return items;
+        } else if (Object.keys(filters).length === 0) {
+          // Empty catalog returned from live backend — do NOT mask with stale mock items
+          storage.set(MENU_STORAGE_KEY, []);
+          return [];
+        }
         return items;
       }
       return this.getAll();

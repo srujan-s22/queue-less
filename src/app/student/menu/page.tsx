@@ -32,7 +32,7 @@ export default function StudentMenuPage() {
     try {
       setIsLoading(true);
       const items = await menuService.fetchMenuItems();
-      if (items && items.length > 0) {
+      if (items) {
         setMenuItems(items);
       }
     } catch {
