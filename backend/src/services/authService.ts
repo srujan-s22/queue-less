@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User, IUser, UserRole } from '../models';
+import { Types } from 'mongoose';
+import { User, IUser, UserRole, AuditLog } from '../models';
 import { env } from '../config/env';
 import { BadRequestError, UnauthorizedError, NotFoundError } from '../utils/errors';
 
@@ -171,15 +172,66 @@ export const updateUserProfile = async (
   };
 };
 
-export const topupUserWallet = async (userId: string, amount: number) => {
+export const topupUserWallet = async (
+  userId: string,
+  amount: number,
+  idempotencyKey?: string
+) => {
+  // Defense-in-depth: Validate amount strictly on service level
+  if (
+    typeof amount !== 'number' ||
+    !Number.isInteger(amount) ||
+    amount < 10 ||
+    amount > 5000
+  ) {
+    throw new BadRequestError('Top-up amount must be an integer between ₹10 and ₹5000.');
+  }
+
+  // Prevent accidental duplicate top-up requests if idempotency key provided
+  if (idempotencyKey) {
+    const existingLog = await AuditLog.findOne({
+      actorId: new Types.ObjectId(userId),
+      action: 'WALLET_TOPUP',
+      'metadata.idempotencyKey': idempotencyKey,
+    });
+
+    if (existingLog) {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new NotFoundError('User not found.');
+      }
+      return {
+        walletBalance: user.walletBalance,
+      };
+    }
+  }
+
   const user = await User.findByIdAndUpdate(
     userId,
     { $inc: { walletBalance: amount } },
     { new: true }
   );
+
   if (!user) {
     throw new NotFoundError('User not found.');
   }
+
+  // Atomically record transaction log
+  await AuditLog.create({
+    actorId: user._id,
+    actorRole: user.role,
+    action: 'WALLET_TOPUP',
+    resourceType: 'UserWallet',
+    resourceId: user._id.toString(),
+    metadata: {
+      amount,
+      previousBalance: user.walletBalance - amount,
+      newBalance: user.walletBalance,
+      idempotencyKey: idempotencyKey || null,
+    },
+    timestamp: new Date(),
+  });
+
   return {
     walletBalance: user.walletBalance,
   };

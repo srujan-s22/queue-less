@@ -57,9 +57,14 @@ export const authApi = {
     return adaptUser(res.data);
   },
 
-  topupWallet: async (amount: number): Promise<{ walletBalance: number }> => {
+  topupWallet: async (amount: number, idempotencyKey?: string): Promise<{ walletBalance: number }> => {
+    const headers: Record<string, string> = {};
+    if (idempotencyKey) {
+      headers['Idempotency-Key'] = idempotencyKey;
+    }
     const res = await apiClient<{ walletBalance: number }>(ENDPOINTS.USERS.WALLET_TOPUP, {
       method: 'POST',
+      headers,
       body: JSON.stringify({ amount } as WalletTopupRequest),
     });
     return res.data;

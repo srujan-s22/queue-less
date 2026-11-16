@@ -91,7 +91,7 @@ export default function StudentDashboardPage() {
                 <span className="text-[10px] text-[#A3A3A3] block uppercase font-medium">Wallet</span>
                 <span className="text-base sm:text-lg font-bold text-white flex items-center justify-center gap-1 mt-0.5">
                   <Wallet className="w-3.5 h-3.5 text-[#A3A3A3]" />
-                  ₹{user.walletBalance ?? 450}
+                  ₹{user.walletBalance ?? 0}
                 </span>
               </div>
               <div className="text-center border-x border-[#383838] px-3">

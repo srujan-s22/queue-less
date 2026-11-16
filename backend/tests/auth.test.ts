@@ -4,7 +4,7 @@ import request from 'supertest';
 import { io as Client } from 'socket.io-client';
 import { createApp } from '../src/app';
 import { setupTestDb } from './setup';
-import { User, Order, PickupSlot, MenuItem } from '../src/models';
+import { User, Order, PickupSlot, MenuItem, AuditLog } from '../src/models';
 import { env } from '../src/config/env';
 import { initSocket } from '../src/socket';
 
@@ -614,6 +614,176 @@ describe('QueueLess Comprehensive Authentication & Role-Based Access Tests', () 
           httpServer.close(() => resolve());
         });
       });
+    });
+  });
+
+  // =========================================================================
+  // 7. CAMPUS WALLET PERSISTENCE, ATOMIC TOP-UP & IDEMPOTENCY
+  // =========================================================================
+  describe('Campus Wallet Persistence, Atomic Top-Up & Idempotency Controls', () => {
+    it('should reject unauthenticated top-up requests with 401', async () => {
+      const res = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .send({ amount: 100 });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toMatch(/Authentication token missing/i);
+    });
+
+    it('should reject top-up with amount less than minimum ₹10', async () => {
+      const res = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ amount: 5 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should reject top-up with amount greater than maximum ₹5000', async () => {
+      const res = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ amount: 6000 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should reject top-up with non-integer or negative amount', async () => {
+      const resNegative = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ amount: -50 });
+
+      expect(resNegative.status).toBe(400);
+
+      const resDecimal = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ amount: 99.95 });
+
+      expect(resDecimal.status).toBe(400);
+    });
+
+    it('should confirm initial balance before top-ups', async () => {
+      const profileRes = await request(app)
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${studentToken}`);
+
+      expect(profileRes.status).toBe(200);
+      expect(profileRes.body.data.walletBalance).toBe(0);
+    });
+
+    it('should successfully execute ₹100 top-up and atomically update balance', async () => {
+      const res = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ amount: 100 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.walletBalance).toBe(100);
+
+      // Verify persistence via /auth/me
+      const profile = await request(app)
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${studentToken}`);
+      expect(profile.body.data.walletBalance).toBe(100);
+    });
+
+    it('should successfully execute ₹200 top-up and update balance to ₹300', async () => {
+      const res = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ amount: 200 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.walletBalance).toBe(300);
+
+      // Verify persistence via /auth/me
+      const profile = await request(app)
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${studentToken}`);
+      expect(profile.body.data.walletBalance).toBe(300);
+    });
+
+    it('should successfully execute ₹500 top-up and update balance to ₹800', async () => {
+      const res = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ amount: 500 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.walletBalance).toBe(800);
+
+      // Verify persistence via /auth/me
+      const profile = await request(app)
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${studentToken}`);
+      expect(profile.body.data.walletBalance).toBe(800);
+    });
+
+    it('should not change wallet balance when an invalid top-up request fails', async () => {
+      const failRes = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({ amount: -100 });
+
+      expect(failRes.status).toBe(400);
+
+      // Verify balance remained strictly ₹800
+      const profile = await request(app)
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${studentToken}`);
+      expect(profile.body.data.walletBalance).toBe(800);
+    });
+
+    it('should prevent duplicate top-up execution when identical Idempotency-Key is submitted', async () => {
+      const idempotencyKey = `topup-idem-${Date.now()}`;
+
+      // First request with idempotency key
+      const firstRes = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .send({ amount: 100 });
+
+      expect(firstRes.status).toBe(200);
+      expect(firstRes.body.data.walletBalance).toBe(900);
+
+      // Second duplicate request with the exact same idempotency key
+      const dupRes = await request(app)
+        .post('/api/v1/users/wallet/topup')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .send({ amount: 100 });
+
+      expect(dupRes.status).toBe(200);
+      // Balance MUST remain 900, NOT increment to 1000!
+      expect(dupRes.body.data.walletBalance).toBe(900);
+
+      // Confirm in database directly
+      const profile = await request(app)
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${studentToken}`);
+      expect(profile.body.data.walletBalance).toBe(900);
+    });
+
+    it('should verify audit logs were recorded for each successful top-up', async () => {
+      const student = await User.findOne({ email: studentEmail });
+      expect(student).toBeDefined();
+
+      const auditLogs = await AuditLog.find({
+        actorId: student!._id,
+        action: 'WALLET_TOPUP',
+      });
+
+      // We performed 4 unique top-ups: 100, 200, 500, 100 (duplicate was suppressed)
+      expect(auditLogs.length).toBe(4);
     });
   });
 });

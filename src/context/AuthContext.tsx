@@ -17,6 +17,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   refreshUser: () => Promise<void>;
+  topupWallet: (amount: number, idempotencyKey?: string) => Promise<number>;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -164,6 +165,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const topupWallet = async (amount: number, idempotencyKey?: string): Promise<number> => {
+    const res = await authApi.topupWallet(amount, idempotencyKey);
+    const newBalance = res.walletBalance;
+    setUser((prev) => ({ ...prev, walletBalance: newBalance }));
+    return newBalance;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -176,6 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         updateUser,
         refreshUser,
+        topupWallet,
         isAuthenticated,
         isLoading,
       }}

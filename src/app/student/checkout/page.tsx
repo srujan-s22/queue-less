@@ -23,7 +23,7 @@ import {
 export default function StudentCheckoutPage() {
   const router = useRouter();
   const { items, subtotal, tax, packagingFee, total, clearCart } = useCart();
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, refreshUser } = useAuth();
   const { showToast } = useToast();
 
   const [slots, setSlots] = useState<PickupSlot[]>(() => configService.getSlots());
@@ -85,9 +85,9 @@ export default function StudentCheckoutPage() {
         paymentMethod,
       });
 
-      // Deduct from wallet if wallet payment only after successful server confirmation
-      if (paymentMethod === 'campus_wallet' && user.walletBalance !== undefined) {
-        updateUser({ walletBalance: user.walletBalance - total });
+      // Refresh authoritative user balance after successful server wallet deduction
+      if (paymentMethod === 'campus_wallet') {
+        await refreshUser();
       }
 
       // Clear the cart
@@ -177,7 +177,7 @@ export default function StudentCheckoutPage() {
                   <Wallet className="w-5 h-5 text-[#252525] mb-2" />
                   <p className="font-semibold text-xs text-[#252525]">Campus Wallet</p>
                   <p className="text-[11px] text-[#737373] mt-0.5">
-                    Balance: <span className="font-semibold text-[#252525]">₹{user.walletBalance ?? 450}</span>
+                    Balance: <span className="font-semibold text-[#252525]">₹{user.walletBalance ?? 0}</span>
                   </p>
                 </div>
 

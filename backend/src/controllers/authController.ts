@@ -69,7 +69,8 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
 
 export const topupWallet = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const updated = await topupUserWallet(req.user!.id, req.body.amount);
+    const idempotencyKey = req.headers['idempotency-key'] as string | undefined;
+    const updated = await topupUserWallet(req.user!.id, req.body.amount, idempotencyKey);
     return sendSuccess(res, updated, 'Wallet topped up successfully');
   } catch (error) {
     return next(error);

@@ -12,9 +12,10 @@ import {
 } from 'lucide-react';
 
 export default function StudentProfilePage() {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateUser, topupWallet, logout } = useAuth();
   const { showToast } = useToast();
 
+  const [isToppingUp, setIsToppingUp] = useState(false);
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone || '+91 98765 43210');
   const [department, setDepartment] = useState(user.department || 'Computer Science & Engg.');
@@ -35,14 +36,27 @@ export default function StudentProfilePage() {
     });
   };
 
-  const handleTopupWallet = (amount: number) => {
-    const current = user.walletBalance ?? 0;
-    updateUser({ walletBalance: current + amount });
-    showToast({
-      type: 'success',
-      title: `₹${amount} Added to Wallet`,
-      message: `Your new balance is ₹${current + amount}.`,
-    });
+  const handleTopupWallet = async (amount: number) => {
+    if (isToppingUp) return;
+    setIsToppingUp(true);
+    const idempotencyKey = `topup-${user.id || 'anon'}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    try {
+      const newBalance = await topupWallet(amount, idempotencyKey);
+      showToast({
+        type: 'success',
+        title: `₹${amount} Added to Wallet`,
+        message: `Your new balance is ₹${newBalance}.`,
+      });
+    } catch (err: any) {
+      console.error('[StudentProfile] Wallet topup failed:', err);
+      showToast({
+        type: 'error',
+        title: 'Top-up Failed',
+        message: err.message || 'Unable to complete wallet top-up. Please try again.',
+      });
+    } finally {
+      setIsToppingUp(false);
+    }
   };
 
   return (
@@ -68,7 +82,7 @@ export default function StudentProfilePage() {
                 QueueLess Campus Wallet
               </span>
               <div className="text-3xl font-bold text-white mt-0.5">
-                ₹{user.walletBalance ?? 450}
+                ₹{user.walletBalance ?? 0}
               </div>
               <p className="text-xs text-[#10B981] mt-0.5">Instant 1-tap express checkout active</p>
             </div>
@@ -79,8 +93,11 @@ export default function StudentProfilePage() {
             {[100, 200, 500].map((amt) => (
               <button
                 key={amt}
+                disabled={isToppingUp}
                 onClick={() => handleTopupWallet(amt)}
-                className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all active:scale-95 flex items-center gap-1"
+                className={`px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all active:scale-95 flex items-center gap-1 ${
+                  isToppingUp ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 <Plus className="w-3 h-3" />
                 ₹{amt}
